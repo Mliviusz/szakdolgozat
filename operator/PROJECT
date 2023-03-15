@@ -1,17 +1,17 @@
-domain: selenium
+domain: mliviusz.com
 layout:
 - go.kubebuilder.io/v3
 plugins:
   manifests.sdk.operatorframework.io/v2: {}
   scorecard.sdk.operatorframework.io/v2: {}
-projectName: szakdolgozat
+projectName: operator
 repo: quay.io/molnar_liviusz/selenium-test-operator
 resources:
 - api:
     crdVersion: v1
     namespaced: true
   controller: true
-  domain: selenium
+  domain: mliviusz.com
   group: selenium
   kind: SeleniumTest
   path: quay.io/molnar_liviusz/selenium-test-operator/api/v1

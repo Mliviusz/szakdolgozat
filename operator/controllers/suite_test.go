@@ -30,7 +30,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	seleniumv1 "github.com/Mliviusz/selenium-test-operator/api/v1"
+	seleniumv1 "quay.io/molnar_liviusz/selenium-test-operator/api/v1"
 	//+kubebuilder:scaffold:imports
 )
 

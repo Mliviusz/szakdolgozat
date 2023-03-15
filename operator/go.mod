@@ -1,4 +1,4 @@
-module github.com/Mliviusz/selenium-test-operator
+module quay.io/molnar_liviusz/selenium-test-operator
 
 go 1.19
 

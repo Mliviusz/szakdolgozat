@@ -6,7 +6,7 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - selenium.selenium
+  - selenium.mliviusz.com
   resources:
   - seleniumtests
   verbs:
@@ -18,13 +18,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - selenium.selenium
+  - selenium.mliviusz.com
   resources:
   - seleniumtests/finalizers
   verbs:
   - update
 - apiGroups:
-  - selenium.selenium
+  - selenium.mliviusz.com
   resources:
   - seleniumtests/status
   verbs:

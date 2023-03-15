@@ -6,13 +6,13 @@ metadata:
     app.kubernetes.io/name: clusterrole
     app.kubernetes.io/instance: seleniumtest-editor-role
     app.kubernetes.io/component: rbac
-    app.kubernetes.io/created-by: szakdolgozat
-    app.kubernetes.io/part-of: szakdolgozat
+    app.kubernetes.io/created-by: operator
+    app.kubernetes.io/part-of: operator
     app.kubernetes.io/managed-by: kustomize
   name: seleniumtest-editor-role
 rules:
 - apiGroups:
-  - selenium.selenium
+  - selenium.mliviusz.com
   resources:
   - seleniumtests
   verbs:
@@ -24,7 +24,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - selenium.selenium
+  - selenium.mliviusz.com
   resources:
   - seleniumtests/status
   verbs:
