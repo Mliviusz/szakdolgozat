@@ -38,18 +38,12 @@ spec:
               configMapName:
                 type: string
               image:
-                description: Foo is an example field of SeleniumTest. Edit seleniumtest_types.go
-                  to remove/update
                 type: string
-              jobBackOffLimit:
-                format: int32
-                type: integer
               schedule:
                 type: string
             required:
             - configMapName
             - image
-            - jobBackOffLimit
             - schedule
             type: object
           status:

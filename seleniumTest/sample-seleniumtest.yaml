@@ -1,0 +1,15 @@
+apiVersion: selenium.mliviusz.com/v1
+kind: SeleniumTest
+metadata:
+  labels:
+    app.kubernetes.io/name: seleniumtest
+    app.kubernetes.io/instance: seleniumtest-sample
+    app.kubernetes.io/part-of: operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: operator
+  name: seleniumtest-sample
+  namespace: guestbook
+spec:
+  schedule: "* * * * *"
+  image: busybox:1.28
+  configMapName: testcode

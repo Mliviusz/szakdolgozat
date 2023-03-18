@@ -6,30 +6,7 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - '*'
-  resources:
-  - configmaps
-  verbs:
-  - create
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - '*'
-  resources:
-  - cronjobs
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - selenium.mliviusz.com
+  - selenium.selenium
   resources:
   - seleniumtests
   verbs:
@@ -41,13 +18,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - selenium.mliviusz.com
+  - selenium.selenium
   resources:
   - seleniumtests/finalizers
   verbs:
   - update
 - apiGroups:
-  - selenium.mliviusz.com
+  - selenium.selenium
   resources:
   - seleniumtests/status
   verbs:

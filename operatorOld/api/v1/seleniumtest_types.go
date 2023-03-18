@@ -28,16 +28,20 @@ type SeleniumTestSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	Image         string `json:"image"`
-	Schedule      string `json:"schedule"`
-	ConfigMapName string `json:"configMapName"`
+	// Foo is an example field of SeleniumTest. Edit seleniumtest_types.go to remove/update
+	Image           string `json:"image"`
+	Schedule        string `json:"schedule"`
+	ConfigMapName   string `json:"configMapName"`
+	JobBackoffLimit int32  `json:"jobBackOffLimit"`
 }
 
 // SeleniumTestStatus defines the observed state of SeleniumTest
 type SeleniumTestStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	CronJobName string `json:"cronJobName"`
+
+	CronJobName  string `json:"cronJobName"`
+	TestSucceded bool   `json:"testSucceded"`
 }
 
 //+kubebuilder:object:root=true
