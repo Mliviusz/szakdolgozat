@@ -1,0 +1,12 @@
+apiVersion: selenium.mliviusz.com/v1
+kind: SeleniumTestResult
+metadata:
+  labels:
+    app.kubernetes.io/name: seleniumtestresult
+    app.kubernetes.io/instance: seleniumtestresult-sample
+    app.kubernetes.io/part-of: operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: operator
+  name: seleniumtestresult-sample
+spec:
+  # TODO(user): Add fields here

@@ -1,0 +1,9 @@
+FROM node:18
+
+RUN mkdir /app
+WORKDIR /app
+RUN npm install @kubernetes/client-node
+
+COPY runner.js runner.js
+
+ENTRYPOINT ["/bin/sh", "-c" , "node runner.js && sleep 3600"]

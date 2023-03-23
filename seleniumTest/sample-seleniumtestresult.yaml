@@ -1,0 +1,8 @@
+apiVersion: selenium.mliviusz.com/v1
+kind: SeleniumTestResult
+metadata:
+  name: testpod
+  namespace: guestbook
+spec:
+  success: true
+  version: 1

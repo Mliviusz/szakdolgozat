@@ -1,0 +1,31 @@
+# permissions for end users to edit seleniumtestresults.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: seleniumtestresult-editor-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: operator
+    app.kubernetes.io/part-of: operator
+    app.kubernetes.io/managed-by: kustomize
+  name: seleniumtestresult-editor-role
+rules:
+- apiGroups:
+  - selenium.mliviusz.com
+  resources:
+  - seleniumtestresults
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - selenium.mliviusz.com
+  resources:
+  - seleniumtestresults/status
+  verbs:
+  - get
