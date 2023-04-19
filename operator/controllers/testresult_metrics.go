@@ -11,7 +11,7 @@ var (
 			Name: "selenium_test_results",
 			Help: "0 mean success, 1 means error",
 		},
-		[]string{},
+		[]string{"test_name", "namespace"},
 	)
 )
 
