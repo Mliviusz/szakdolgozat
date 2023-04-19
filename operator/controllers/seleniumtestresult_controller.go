@@ -69,7 +69,7 @@ func (r *SeleniumTestResultReconciler) Reconcile(ctx context.Context, req ctrl.R
 	}
 
 	labels := prometheus.Labels{"test-name": instance.Name, "namespace": instance.Namespace}
-
+	log.Info("Updating metric selenium_test_results with labels 'test-name': ", instance.Name, ",'namespace: '", instance.Namespace)
 	if instance.Spec.Success {
 		test_results.With(labels).Set(1)
 	} else {

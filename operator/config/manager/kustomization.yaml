@@ -5,4 +5,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: quay.io/molnar_liviusz/selenium-test-operator
-  newTag: v0.0.18
+  newTag: v0.0.19

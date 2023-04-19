@@ -16,3 +16,8 @@ resources:
 - auth_proxy_role.yaml
 - auth_proxy_role_binding.yaml
 - auth_proxy_client_clusterrole.yaml
+# ClusterRoles
+- seleniumtest_editor_role.yaml
+- seleniumtest_viewer_role.yaml
+- seleniumtestresult_editor_role.yaml
+- seleniumtestresult_viewer_role.yaml
