@@ -29,6 +29,56 @@ rules:
   - update
   - watch
 - apiGroups:
+  - '*'
+  resources:
+  - rolebindings
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - '*'
+  resources:
+  - serviceaccounts
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - selenium.mliviusz.com
+  resources:
+  - seleniumtestresults
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - selenium.mliviusz.com
+  resources:
+  - seleniumtestresults/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - selenium.mliviusz.com
+  resources:
+  - seleniumtestresults/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - selenium.mliviusz.com
   resources:
   - seleniumtests

@@ -1,5 +1,5 @@
 # szakdolgozat
-
+recommended: minikube start --cpus=4 --memory=8G --disk-size=20G
 export KUBECONFIG=/mnt/d/szakdolgozat/kubeconfig
 
 kubectl config set-context --current --namespace=guestbook
@@ -14,6 +14,10 @@ kubectl create namespace monitoring
 kubectl config set-context --current --namespace=monitoring
 helm install prometheus prometheus-community/prometheus-operator-crds
 
+helm repo add aerokube https://charts.aerokube.com/
+helm repo update
+kubectl create namespace moon
+helm upgrade --install -f moon_values.yaml -n moon moon aerokube/moon2
 
 # Verisons
 

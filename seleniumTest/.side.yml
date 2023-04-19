@@ -1,0 +1,6 @@
+capabilities:
+  browserName: "chrome"
+#  'moz:firefoxOptions':
+#    args:
+#    - '--headless'
+#    - 'no-sandbox'

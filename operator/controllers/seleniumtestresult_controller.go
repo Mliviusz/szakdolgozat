@@ -19,6 +19,8 @@ package controllers
 import (
 	"context"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -54,6 +56,25 @@ func (r *SeleniumTestResultReconciler) Reconcile(ctx context.Context, req ctrl.R
 	log2.Info("Reconciling SeleniumTestResult", "Request.Namespace", req.Namespace, "Request.Name", req.Name)
 
 	// TODO(user): your logic here
+
+	instance := &seleniumv1.SeleniumTestResult{}
+	err := r.Client.Get(context.Background(), req.NamespacedName, instance)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			log.Info("SeleniumTestResult deleted")
+			return ctrl.Result{}, nil
+		}
+		log.Error(err, "Failed to get SeleniumTestResult")
+		return ctrl.Result{}, err
+	}
+
+	labels := prometheus.Labels{"test-name": instance.Name, "namespace": instance.Namespace}
+
+	if instance.Spec.Success {
+		test_results.With(labels).Set(1)
+	} else {
+		test_results.With(labels).Set(0)
+	}
 
 	return ctrl.Result{}, nil
 }

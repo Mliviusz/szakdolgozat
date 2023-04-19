@@ -30,7 +30,7 @@ type SeleniumTestResultSpec struct {
 
 	// Foo is an example field of SeleniumTestResult. Edit seleniumtestresult_types.go to remove/update
 	Success bool `json:"success"`
-	Version int  `json:"version"`
+	EndTime int  `json:"endTime"`
 }
 
 // SeleniumTestResultStatus defines the observed state of SeleniumTestResult

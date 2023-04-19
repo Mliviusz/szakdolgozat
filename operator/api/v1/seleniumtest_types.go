@@ -31,6 +31,8 @@ type SeleniumTestSpec struct {
 	Image         string `json:"image"`
 	Schedule      string `json:"schedule"`
 	ConfigMapName string `json:"configMapName"`
+	Retries       string `json:"retries"`
+	SeleniumGrid  string `json:"seleniumGrid"`
 }
 
 // SeleniumTestStatus defines the observed state of SeleniumTest

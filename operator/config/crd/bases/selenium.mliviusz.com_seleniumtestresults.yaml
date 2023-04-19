@@ -36,15 +36,15 @@ spec:
           spec:
             description: SeleniumTestResultSpec defines the desired state of SeleniumTestResult
             properties:
+              endTime:
+                type: integer
               success:
                 description: Foo is an example field of SeleniumTestResult. Edit seleniumtestresult_types.go
                   to remove/update
                 type: boolean
-              version:
-                type: integer
             required:
+            - endTime
             - success
-            - version
             type: object
           status:
             description: SeleniumTestResultStatus defines the observed state of SeleniumTestResult

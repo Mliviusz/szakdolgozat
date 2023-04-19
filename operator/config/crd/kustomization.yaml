@@ -3,6 +3,7 @@
 # It should be run by config/default
 resources:
 - bases/selenium.mliviusz.com_seleniumtests.yaml
+- bases/selenium.mliviusz.com_seleniumtestresults.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:

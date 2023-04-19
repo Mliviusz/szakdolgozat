@@ -2,8 +2,13 @@ FROM node:18
 
 RUN mkdir /app
 WORKDIR /app
+RUN apt-get update
+
 RUN npm install @kubernetes/client-node
+RUN npm install -g selenium-side-runner
+COPY .side.yml .side.yml
 
 COPY runner.js runner.js
 
-ENTRYPOINT ["/bin/sh", "-c" , "node runner.js && sleep 3600"]
+# selenium-side-runner -s $SELENIUM_GRID  -o results -r $RETRIES ./*.side &&
+ENTRYPOINT ["/bin/sh", "-c" , "node runner.js"]

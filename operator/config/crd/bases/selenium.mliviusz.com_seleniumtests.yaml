@@ -39,12 +39,18 @@ spec:
                 type: string
               image:
                 type: string
+              retries:
+                type: string
               schedule:
+                type: string
+              seleniumGrid:
                 type: string
             required:
             - configMapName
             - image
+            - retries
             - schedule
+            - seleniumGrid
             type: object
           status:
             description: SeleniumTestStatus defines the observed state of SeleniumTest

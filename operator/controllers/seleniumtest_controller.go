@@ -32,6 +32,7 @@ import (
 	//"github.com/operator-framework/operator-sdk/pkg/util"
 
 	batchv1 "k8s.io/api/batch/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	//batchv1beta1 "k8s.io/api/batch/v1beta1"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -60,6 +61,8 @@ var log = ctrllog.Log.WithName("controller_seleniumtest")
 //+kubebuilder:rbac:groups=selenium.mliviusz.com,resources=seleniumtests/finalizers,verbs=update
 //+kubebuilder:rbac:groups=*,resources=cronjobs,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=*,resources=configmaps,verbs=get;list;watch;create;update;patch
+//+kubebuilder:rbac:groups=*,resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=*,resources=rolebindings,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -74,8 +77,6 @@ func (r *SeleniumTestReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	log := ctrllog.FromContext(ctx)
 
 	log.Info("Reconciling SeleniumTest", "Request.Namespace", req.Namespace, "Request.Name", req.Name)
-
-	// TODO(user): your logic here
 
 	instance := &seleniumv1.SeleniumTest{}
 	err := r.Client.Get(context.Background(), req.NamespacedName, instance)
@@ -95,6 +96,20 @@ func (r *SeleniumTestReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return ctrl.Result{}, err
 	}
 
+	// Ensure the ServiceAccount is present
+	err = r.ensureServiceAccount(instance)
+	if err != nil {
+		log.Error(err, "Failed to ensure ServiceAccount for CronJob is present")
+		return ctrl.Result{}, err
+	}
+
+	// Ensure the RoleBinding is present
+	err = r.ensureRoleBinding(instance)
+	if err != nil {
+		log.Error(err, "Failed to ensure RoleBinding for ServiceAccount is present")
+		return ctrl.Result{}, err
+	}
+
 	// Ensure the CronJob is present
 	err = r.ensureCronJob(instance)
 	if err != nil {
@@ -111,6 +126,46 @@ func (r *SeleniumTestReconciler) ensureConfigMap(instance *seleniumv1.SeleniumTe
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("ConfigMap with the name ", instance.Spec.ConfigMapName, " in namespace ", instance.Namespace, " was not found")
 		return err
+	} else if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *SeleniumTestReconciler) ensureServiceAccount(instance *seleniumv1.SeleniumTest) error {
+	serviceAccount := &corev1.ServiceAccount{}
+	err := r.Client.Get(context.Background(), types.NamespacedName{Namespace: instance.Namespace, Name: instance.Name}, serviceAccount)
+	if err != nil && errors.IsNotFound(err) {
+		// Create the ServiceAccount
+		newServiceAccount := r.newServiceAccountForSeleniumTest(instance)
+		log.Info("Creating a new ServiceAccount", "ServiceAccount.Namespace", newServiceAccount.Namespace, "ServiceAccount.Name", newServiceAccount.Name)
+		err = r.Client.Create(context.Background(), newServiceAccount)
+		if err != nil {
+			return err
+		} else {
+			log.Info("ServiceAccount ", newServiceAccount.Name, " created")
+		}
+	} else if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *SeleniumTestReconciler) ensureRoleBinding(instance *seleniumv1.SeleniumTest) error {
+	roleBinding := &rbacv1.RoleBinding{}
+	err := r.Client.Get(context.Background(), types.NamespacedName{Namespace: instance.Namespace, Name: instance.Name}, roleBinding)
+	if err != nil && errors.IsNotFound(err) {
+		// Create the RoleBinding
+		newRoleBinding := r.newRoleBindingForSeleniumTest(instance)
+		log.Info("Creating a new RoleBinding", "RoleBinding.Namespace", newRoleBinding.Namespace, "RoleBinding.Name", newRoleBinding.Name)
+		err = r.Client.Create(context.Background(), newRoleBinding)
+		if err != nil {
+			return err
+		} else {
+			log.Info("RoleBinding ", newRoleBinding.Name, " created")
+		}
 	} else if err != nil {
 		return err
 	}
@@ -138,11 +193,44 @@ func (r *SeleniumTestReconciler) ensureCronJob(instance *seleniumv1.SeleniumTest
 	return nil
 }
 
+func (r *SeleniumTestReconciler) newServiceAccountForSeleniumTest(instance *seleniumv1.SeleniumTest) *corev1.ServiceAccount {
+	labels := map[string]string{
+		"app": "selenium-test",
+	}
+
+	var serviceAccount = &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      instance.Name,
+			Namespace: instance.Namespace,
+			Labels:    labels,
+		},
+	}
+	return serviceAccount
+}
+
+func (r *SeleniumTestReconciler) newRoleBindingForSeleniumTest(instance *seleniumv1.SeleniumTest) *rbacv1.RoleBinding {
+	labels := map[string]string{
+		"app": "selenium-test",
+	}
+
+	var roleBinding = &rbacv1.RoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      instance.Name,
+			Namespace: instance.Namespace,
+			Labels:    labels,
+		},
+		Subjects: []rbacv1.Subject{
+			rbacv1.Subject{Kind: "ServiceAccount", Name: instance.Name, Namespace: instance.Namespace},
+		},
+		RoleRef: rbacv1.RoleRef{APIGroup: "rbac.authorization.k8s.io", Kind: "ClusterRole", Name: "operator-seleniumtestresult-editor-role"},
+	}
+	return roleBinding
+}
+
 func (r *SeleniumTestReconciler) newCronJobForSeleniumTest(instance *seleniumv1.SeleniumTest) *batchv1.CronJob {
 	labels := map[string]string{
 		"app": "selenium-test",
 	}
-	//trueVar := true
 
 	var cronJob = &batchv1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
@@ -154,7 +242,6 @@ func (r *SeleniumTestReconciler) newCronJobForSeleniumTest(instance *seleniumv1.
 			Schedule:          instance.Spec.Schedule,
 			JobTemplate:       batchv1.JobTemplateSpec{Spec: batchv1.JobSpec{Template: corev1.PodTemplateSpec{}}},
 			ConcurrencyPolicy: batchv1.ForbidConcurrent,
-			//JobBackoffLimit:   instance.Spec.JobBackoffLimit,   Szerintem ennek a jobTemplate-ben a helye
 		},
 	}
 
@@ -164,7 +251,12 @@ func (r *SeleniumTestReconciler) newCronJobForSeleniumTest(instance *seleniumv1.
 		Name:            "selenium-test",
 		Image:           instance.Spec.Image,
 		ImagePullPolicy: corev1.PullIfNotPresent,
-		Command:         []string{"/bin/sh", "-c", "echo Hello from the SeleniumTest CronJob", "ls -R /mnt/config"},
+		Env: []corev1.EnvVar{
+			corev1.EnvVar{Name: "POD_NAME", Value: instance.Name},
+			corev1.EnvVar{Name: "POD_NAMESPACE", ValueFrom: &corev1.EnvVarSource{FieldRef: &corev1.ObjectFieldSelector{FieldPath: "metadata.namespace"}}},
+			corev1.EnvVar{Name: "RETRIES", Value: instance.Spec.Retries},
+			corev1.EnvVar{Name: "SELENIUM_GRID", Value: instance.Spec.SeleniumGrid},
+		},
 	}
 
 	// Create a volume and volume mount for the ConfigMap
@@ -190,6 +282,7 @@ func (r *SeleniumTestReconciler) newCronJobForSeleniumTest(instance *seleniumv1.
 	cronJob.Spec.JobTemplate.Spec.Template.Spec.RestartPolicy = "OnFailure"
 	cronJob.Spec.JobTemplate.Spec.Template.Spec.Volumes = []corev1.Volume{volume}
 	cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].VolumeMounts = []corev1.VolumeMount{volumeMount}
+	cronJob.Spec.JobTemplate.Spec.Template.Spec.ServiceAccountName = instance.Name
 
 	// Configure the JobBackoffLimit so that failed Jobs are retried
 	//    cronJob.Spec.JobBackoffLimit = instance.Spec.JobBackOffLimit

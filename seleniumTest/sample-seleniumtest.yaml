@@ -8,8 +8,10 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/created-by: operator
   name: seleniumtest-sample
-  namespace: guestbook
+  namespace: testing-ns
 spec:
-  schedule: "* * * * *"
-  image: busybox:1.28
+  schedule: "*/2 * * * *"
+  image: quay.io/molnar_liviusz/selenium-test-runner:v0.0.10
   configMapName: testcode
+  retries: "3"
+  seleniumGrid: "http://moon.moon.svc:4444/wd/hub"
