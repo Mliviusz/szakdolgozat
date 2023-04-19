@@ -61,15 +61,15 @@ func (r *SeleniumTestResultReconciler) Reconcile(ctx context.Context, req ctrl.R
 	err := r.Client.Get(context.Background(), req.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			log.Info("SeleniumTestResult deleted")
+			log2.Info("SeleniumTestResult deleted")
 			return ctrl.Result{}, nil
 		}
-		log.Error(err, "Failed to get SeleniumTestResult")
+		log2.Error(err, "Failed to get SeleniumTestResult")
 		return ctrl.Result{}, err
 	}
 
-	labels := prometheus.Labels{"test-name": instance.Name, "namespace": instance.Namespace}
-	log.Info("Updating metric selenium_test_results with labels 'test-name': ", instance.Name, ",'namespace: '", instance.Namespace)
+	labels := prometheus.Labels{"test_name": instance.Name, "namespace": instance.Namespace}
+	log2.Info("Updating metric selenium_test_results with labels", "test_name", instance.Name, "namespace", instance.Namespace)
 	if instance.Spec.Success {
 		test_results.With(labels).Set(1)
 	} else {

@@ -13,6 +13,15 @@ resources:
   controller: true
   domain: mliviusz.com
   group: selenium
+  kind: SeleniumTestResult
+  path: quay.io/molnar_liviusz/selenium-test-operator/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: mliviusz.com
+  group: selenium
   kind: SeleniumTest
   path: quay.io/molnar_liviusz/selenium-test-operator/api/v1
   version: v1
