@@ -1,6 +1,10 @@
 \chapter{Bevezetés}
 \label{ch:intro}
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. In eu egestas mauris. Quisque nisl elit, varius in erat eu, dictum commodo lorem. Sed commodo libero et sem laoreet consectetur. Fusce ligula arcu, vestibulum et sodales vel, venenatis at velit \cite{dahl1972structured}. Aliquam erat volutpat. Proin condimentum accumsan velit id hendrerit. Cras egestas arcu quis felis placerat, ut sodales velit malesuada. Maecenas et turpis eu turpis placerat euismod.\footnote{Maecenas a urna viverra, scelerisque nibh ut, malesuada ex.}
+In my professional background as a DevOps engineer, I observed the importance and hardships of ensuring services which are stable, scalable and of high quality. Enterprises are rapidly moving into the cloud-native space, utilizing microservice architectures to enhance stability and scalability. Therefore modern systems are far more complex, with many moving parts.
 
-Aliquam suscipit dignissim tempor. Praesent tortor libero, feugiat et tellus porttitor, malesuada eleifend felis. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus \cite{cormen2009algorithms,krasner1988mvc}. Nullam eleifend imperdiet lorem, sit amet imperdiet metus pellentesque vitae. Donec nec ligula urna. Aliquam bibendum tempor diam, sed lacinia eros dapibus id. Donec sed vehicula turpis. Aliquam hendrerit sed nulla vitae convallis. Etiam libero quam, pharetra ac est nec, sodales placerat augue. \citeauthor{dijkstra1979goto} praesent eu consequat purus \cite{dijkstra1979goto}. 
+High quality is ensured through the pre-deployment unit, integration, system and acceptance testing, besides live monitoring of logs, metrics, traces and alerting. Most of the tools can only capture errors of granular level, and therefore incapable of representing overall user experience in a measurable form.
+
+Selenium provides the toolset to implement system and acceptance level tests by imitating user behaviour. However, it can only be utilized in the pre-deployment testing phase, and current live production monitoring cannot effectively spot errors between system components.
+
+My thesis project is about bringing selenium's capabilities to the live production cloud-native space and providing an easy-to-use instrument to integrate selenium testing into industry-standard monitoring/alerting chains by building a go-based Kubernetes operator which automates selenium test runs and aggregates the results in Prometheus format.
