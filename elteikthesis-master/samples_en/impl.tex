@@ -41,9 +41,151 @@ The starting times of virtual machines and containers are another distinction. V
 
 In conclusion, although virtual machines and containers offer virtualization and isolation, they differ in resource usage, startup time, and security, with containers providing a more portable and practical option for running applications.
 
-\section{Source code samples}
+\subsection{The Advantages of Container Orchestration with Kubernetes}
 
-Nulla sodales purus id mi consequat, eu venenatis odio pharetra. Cras a arcu quam. Suspendisse augue risus, pulvinar a turpis et, commodo aliquet turpis. Nulla aliquam scelerisque mi eget pharetra. Mauris sed posuere elit, ac lobortis metus. Proin lacinia sit amet diam sed auctor. Nam viverra orci id sapien sollicitudin, a aliquam lacus suscipit. Quisque ac tincidunt leo Code~\ref{src:cpp} and \ref{src:csharp}:
+\begin{wrapfigure}{r}{0.25\textwidth}
+    \begin{center}
+        \includegraphics[width=0.23\textwidth]{kubernetes-text}
+	  \label{fig:kubernetes-logo}
+    \end{center}
+\end{wrapfigure}
+Automating the deployment, scaling, and maintenance of containerized applications is known as container orchestration. In the age of cloud computing, container orchestration has become an essential tool for managing massive applications. The most well-known and commonly used container orchestration platform is Kubernetes.
+
+The ability to automatically deploy and scale containerized apps is one of the critical benefits of Kubernetes-based container orchestration. Developers can declare the intended state of their application using Kubernetes' declarative configuration technique, and Kubernetes will take care of the rest. By doing this, the application can scale up or down as necessary and will continuously operate as intended.
+
+Additionally, a variety of built-in features and extensions provided by Kubernetes enable sophisticated container orchestration capabilities. These include, among other things, automatic failover, load balancing, advanced scheduling, and service discovery. Kubernetes also offers a powerful command-line interface and API for communicating with and administering containerized applications.
+
+Kubernetes' capacity to function on any cloud infrastructure or on-premises data center is a substantial additional benefit. No matter where containerized applications are running, Kubernetes abstracts away the underlying infrastructure and offers a standard application deployment and management method. Because of this, fully cloud-native apps that can be deployed anywhere may be created.
+
+Additionally, Kubernetes has a sizable and vibrant open-source community, which means it is continuously developing and getting better. The community updates Kubernetes with additional functions, bug fixes, and security patches, transforming it into a dependable and safe environment for running mission-critical applications.
+
+In conclusion, Kubernetes container orchestration is necessary for managing modern cloud-native applications. It is the best platform for managing containerized applications due to its powerful orchestration features, automation of deployment and scaling, and flexibility to run on any infrastructure. Thanks to its vibrant and expanding community, it will continue to be a safe and dependable platform for managing apps for many years.
+
+
+\subsection{Fundamental Kubernetes Objects}
+
+The open-source container orchestration platform Kubernetes automates containerized applications' deployment, scaling, and maintenance. Kubernetes enables developers to construct and manage containerized applications at scale regardless of the underlying infrastructure.
+
+\begin{wrapfigure}{L}{0.09\textwidth}
+        \includesvg[width=00.085\textwidth]{pod}
+	  \label{fig:pod}
+\end{wrapfigure}
+
+A pod, a single instance of a container running on a node, is the smallest deployment unit in Kubernetes. One or more containers may be included in pods, which share the same network namespace and storage. By guaranteeing that a certain number of replicas, or exact duplicates of the pod, are active at all times, replicasets control the scaling of pods.
+
+
+\begin{wrapfigure}{L}{0.09\textwidth}
+        \includesvg[width=0.085\textwidth]{deploy}
+	  \label{fig:deploy}
+\end{wrapfigure}
+
+A set of replicasets and pods may be managed in the desired state declaratively using deployments. By establishing a deployment and describing the number of copies and the containers' desired state, developers can ensure the application is functioning as planned. Rolling updates, rollbacks, and version control are additional features of deployments.
+
+
+\begin{wrapfigure}{L}{0.09\textwidth}
+        \includesvg[width=0.085\textwidth]{svc}
+	  \label{fig:svc}
+\end{wrapfigure}
+
+By providing a consistent IP address and DNS name for accessing a group of replicas, services isolate network access to pods and replicasets. Services can expose pods openly to the internet or internally to other pods in the same namespace.
+
+\begin{wrapfigure}{L}{0.09\textwidth}
+    \begin{center}
+            \includesvg[width=0.085\textwidth]{ns}
+    	  \label{fig:ns}
+      \end{center}
+    \begin{center}
+        \includesvg[width=0.085\textwidth]{cm}
+	  \label{fig:cm}
+  \end{center}
+   \begin{center}
+        \includesvg[width=0.085\textwidth]{cronjob}
+	  \label{fig:cronjob}
+  \end{center}
+\end{wrapfigure}
+
+Objects in a Kubernetes cluster are grouped using namespaces. They give a mechanism to group and protect resources, so one can use them to separate teams or applications into logical partitions inside a cluster.
+
+Configmaps hold configuration information that running containers can access. They offer a practical method for handling application configuration information, including environment variables or configuration files.
+
+Jobs are Kubernetes objects that execute a specified task, such as a batch job or a script, until it is finished. CronJobs, on the other hand, are objects that execute a specific operation at a predetermined time, such as executing a backup script every day at midnight.
+
+These Kubernetes components offer a robust and adaptable infrastructure for managing containerized applications. Kubernetes allows developers to concentrate on developing code and providing business value rather than worrying about the underlying infrastructure by utilizing these abstractions and automating typical tasks.
+
+
+\subsection{Kubernetes custom resources and operators}
+
+Developers can control many facets of their application deployments using the wide range of built-in resources that Kubernetes offers. However, some applications need specialized resources that Kubernetes does not ship with. Kubernetes provides custom resources, enabling programmers to create API objects representing unique resource types.
+
+Because they can be used to represent any resource that is not already included in Kubernetes, custom resources are crucial. These unique resources can be used to specify certain actions, like configuring a firewall just for an application or creating a unique scaling policy. Custom resources can be generated, maintained, and watched over in the same ways as built-in resources.
+
+Making a unique resource is simply the first action in any case. Developers frequently need bespoke controllers in order to manage customized resources efficiently. A Kubernetes operator known as a controller tracks changes to a custom resource and initiates the necessary responses. The operator carries out a variety of duties, like changing a configuration, starting a deployment, or keeping track of a resource.
+
+An efficient technique to automate complicated activities involving bespoke resources is with Kubernetes operators. Developers can design operators to give particular behavior for a unique resource. As a result, operators automate resource management rather than managing resources by hand, lowering the possibility of human error and speeding up the process.
+
+The ability for developers to customize Kubernetes to meet their unique needs is one of the advantages of its bespoke resources and operators. Instead of constraining their workflows to fit into Kubernetes' existing architecture, developers can design new resources and operators to automate their unique workflows.
+
+To sum up, Kubernetes' custom resources and operators are robust tools that give developers the ability to increase the functionality of Kubernetes to match their particular needs. Developers can define their API objects for custom types of resources using custom resources, and operators can automate complex activities involving these resources. Developers can create a more robust and automated Kubernetes environment that suits their unique requirements by employing custom resources and operators.
+
+
+\subsection{Understanding Kubernetes Role-Based Access Control (RBAC)}
+
+An essential security component of Kubernetes is role-based access control (RBAC), which enables users to specify explicit permissions and access policies for managing Kubernetes resources. Kubernetes administrators can control who has access to and can alter resources at a precise level with RBAC.
+
+By establishing roles and bindings, RBAC enables Kubernetes cluster managers to manage access to the cluster. A binding ties a role to a user, group, or service account, whereas a role defines a set of rules that specify the actions a user or group can do on Kubernetes resources. Kubernetes administrators can build bespoke access policies that perfectly meet their security needs by combining roles and bindings.
+
+Cluster roles, cluster role bindings, roles, and roles bindings are only a few of the roles and bindings the RBAC feature in Kubernetes provides. While roles and role bindings define permissions for resources inside a namespace, cluster roles, and cluster role bindings define permissions for resources across the entire cluster.
+
+The definition of cluster-wide permissions that can be granted to individuals or groups uses cluster roles and cluster role bindings. Cluster roles are created by providing a set of rules that specify the operations that can be carried out on a resource. A user, group, or service account is bound to a cluster role by a cluster role binding. The resources indicated in the cluster role can now be accessed and modified by the user or group.
+
+Namespace-level permissions are defined using roles and role bindings and can be given to individuals or groups. Roles are built by specifying a set of rules that limit what can be done to resources within a given namespace. By associating a role with a user, group, or service account, those accounts can access and modify resources in the namespace designated by the role.
+
+Granular control over who can access and alter resources within a Kubernetes cluster is possible thanks to Kubernetes RBAC. RBAC allows cluster administrators to handle rights at a highly granular level, which is crucial for big businesses with detailed security requirements.
+
+
+\subsection{Microservice Architecture and Kubernetes: A Perfect Match for Scalability and Agility}
+
+Creating an application as a collection of loosely connected, independently deployable services is known as microservice architecture. Typically, each microservice only handles one task and interacts with other microservices using clear APIs.
+
+The popularity of the microservice architecture can be attributed to a number of factors. The ability for teams to build, test, and deploy separate services independently is one of its key benefits. These can lead to shorter development cycles and more agility. Additionally, because microservices can be scaled horizontally, more service instances can be added to meet growing demand, improving the performance and scalability of the entire application.
+
+Because it offers many features that make it simple for teams to deploy, manage, and scale microservices, Kubernetes, as a container orchestration platform, is a good fit for the microservice architecture. By enabling teams to deploy microservices as containers, Kubernetes offers a dependable and adaptable environment that can run on any infrastructure. Additionally, Kubernetes has functions like load balancing, service discovery, and automatic scaling essential for managing large-scale microservices applications.
+
+In conclusion, microservice architecture is favored because it improves software development's flexibility, scalability, and agility. Microservices may be quickly launched, managed, and scaled to meet the demands of modern applications when used in conjunction with Kubernetes. Microservices and Kubernetes working together can speed up application development cycles, enhance application performance, and boost resilience and fault tolerance.
+
+
+\subsection{Challenges of Testing Microservices and How Selenium Helps}
+
+Although the flexibility and scalability of the microservice architecture are two of its many advantages, it also presents some unique testing challenges. Due to their distributed nature, the complexity of the system, and the requirement to ensure that all services function together without interruption, testing microservices thoroughly can be challenging. Fortunately, there are tools like Selenium that can assist in overcoming some of these obstacles.
+
+The fact that processes are spread across several services makes it difficult to test individual services, which is one of the critical challenges with testing microservices. Additionally, it can be challenging to guarantee that each service functions correctly because adjustments to one service may impact how another behaves. Furthermore, microservices frequently use external APIs, which makes testing more challenging.
+
+The system's intricacy poses another difficulty. It can be challenging to keep track of what is happening and where problems occur when numerous small services are communicating. This complexity can cause delays in problem resolution by making it challenging to pinpoint the source of a problem.
+
+An open-source automated testing tool called Selenium can assist in overcoming some of these difficulties. In order to make testing web applications that use microservices simpler, it offers a set of tools for automating web browsers. Testers can mimic user interactions with a web application using Selenium to ensure all services operate as intended.
+
+Selenium can test an application more completely and faster than manual testing since it can automate testing. Additionally, it is capable of running tests concurrently, enabling quicker feedback and shorter testing cycles. Selenium also offers an interface with other testing frameworks and tools, such as JUnit and TestNG, which makes it simpler to incorporate into already-in-place testing procedures.
+
+In conclusion, thorough testing might be difficult because of the dispersed nature and complexity of microservices. However, by automating testing and offering a suite of tools for testing web applications that rely on microservices, tools like Selenium can help to overcome some of these difficulties. Using Selenium, testers can check that microservices interact adequately and quickly spot problems, resulting in quicker feedback and shorter testing cycles.
+
+
+\subsection{An Overview of Selenium: Application Testing Tool}
+
+Selenium is a web application testing tool. It automates testing online applications by imitating user behaviors, including button clicks, text entries, and page navigation. Developers can use Selenium to create scripts that automate time-consuming testing processes, saving time and effort compared to manual testing.
+
+Java, Python, C#, Ruby, and JavaScript are just a few programming languages supported by the open-source Selenium tool. Selenium WebDriver, Selenium Grid, and Selenium IDE are some of its various parts.
+
+A programming interface called Selenium WebDriver enables programmers to automate interactions with web browsers. It offers a selection of techniques for manipulating online components like buttons, text boxes, and drop-down menus, moving between pages, and utilizing browser capabilities like tabs and windows.
+
+Selenium Grid is a tool for simultaneously executing tests on several operating systems and browsers. It permits parallel testing, which can drastically cut down on the amount of time needed for testing.
+
+The browser extension Selenium IDE offers a user-friendly interface for building and running Selenium tests. It enables developers to capture user interactions and produce test scripts without creating any code.
+
+Selenium IDE stores test cases in files with .side extensions. They are JSON files that contain information about the test case, such as the name, description, and steps. The steps in a .side file describe the actions that Selenium should perform during the test, such as clicking a button or entering text into a text box.
+
+As a result of imitating user activities, Selenium is a popular testing tool for web applications that automates the testing process. Selenium WebDriver, Selenium Grid, and Selenium IDE are some of its various parts. In order to store test cases, Selenium IDE uses .side files. It also offers a user-friendly interface for developing and running Selenium tests.
+
+
 
 \lstset{caption={Hello World in C++}, label=src:cpp}
 \begin{lstlisting}[language={C++}]
