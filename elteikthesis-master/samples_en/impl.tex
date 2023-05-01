@@ -201,7 +201,7 @@ Alerting and service monitors work together to give operators the ability to cre
 
 This section discusses the architecture of the thesis project operator, providing all the information necessary to fully comprehend how its many components relate to one another and how their interdependencies operate.
 
-In a nutshell, the operator accepts the SeleniunTest kind of custom resource, which specifies the name, scheduling, browser runner service, and name of the config map holding the selenium .side test file. As a result, the operator constructs a cronjob with the necessary permissions, which, when executed at the specified times, arranges the tests to run on the browser runner service. The test results are subsequently written into a SeleniumTestResult type of CR. The operator responds with its reconciliation logic, which exposes the test results in Prometheus format in a central location for Prometheus-like monitoring solutions to integrate into their alerting chain. Each component will be more thoroughly explained in this section.
+In a nutshell, the operator accepts the SeleniunTest kind of custom resource, specifying the name, scheduling, browser runner service, and config map holding the selenium .side test file. As a result, the operator constructs a cronjob with the necessary permissions, which arranges the tests to run on the browser runner service when executed at the specified times. The test results are subsequently written into a SeleniumTestResult type of CR. The operator responds with its reconciliation logic, which exposes the test results in Prometheus format in a central location for Prometheus-like monitoring solutions to integrate into their alerting chain. Each component will be more thoroughly explained in this section.
 
 In addition, viable other integration methods will be highlighted, demonstrating how adaptably a company can integrate it into its environment without resorting to quirky workarounds or modifying the operator.
 
@@ -212,10 +212,184 @@ In addition, viable other integration methods will be highlighted, demonstrating
 \end{figure}
 
 \subsection{User-facing components of the SeleniumTestOperator}
-
 As shown in the user manual, the user needs a test created by the Selenium IDE exported to a .side file, and placed into a config map, to set up a test in the cluster. Additionally, the user must supply a SeleniumTest custom resource containing the necessary data about it. With the operator's deployment, a unique resource definition was also deployed for Kubernetes to comprehend these CRs.
 
-By defining custom resources that are not included in the basic Kubernetes API, Kubernetes Custom Resource Definitions (CRDs) are used to expand the Kubernetes API. Developers can manage essential resources like pods, services, and deployments in the same way that they manage custom resources, thanks to CRDs.
+By defining custom resources not included in the basic Kubernetes API, Kubernetes Custom Resource Definitions (CRDs) are used to expand the Kubernetes API. Developers can manage essential resources like pods, services, and deployments in the same way that they manage custom resources, thanks to CRDs.
+
+Making a YAML file that details the custom resource's schema is part of defining a CRD. The schema specifies the attributes that can be set and the resource's structure. Additionally, it contains validation rules that guarantee the accuracy of the data entered for the custom resource.
+
+Typically, the CRD YAML file contains the following data:
+
+\begin{itemize}
+	\item Group and version information: Indicates which API group and version the CRD is a part of. In API requests, the CRD is identified by the group and version.
+	\item Kind information: gives specifics about the type of the custom resource. In Kubernetes API queries, the kind is used to specify the kind of the custom resource.
+	\item Metadata: includes details on the CRD, including its name, labels, and annotations.
+	\item Spec: Specifies the fields that can be set and their types, as well as the structure for the custom resource. Additionally, it includes validation rules that guarantee accurate data entry for the custom resource.
+\end{itemize}
+
+Each CRD has a corresponding go object defined within the operator, as well as a reconcile function:
+
+\begin{lstlisting}[language={Go}]
+	// SeleniumTestSpec defines the desired state of SeleniumTest
+	type SeleniumTestSpec struct {
+		Repository    string `json:"repository"`
+		Image         string `json:"image"`
+		Tag           string `json:"tag"`
+		Schedule      string `json:"schedule"`
+		ConfigMapName string `json:"configMapName"`
+		Retries       string `json:"retries"`
+		SeleniumGrid  string `json:"seleniumGrid"`
+	}
+	// SeleniumTestStatus defines the observed state of SeleniumTest
+	type SeleniumTestStatus struct {
+		CronJobName string `json:"cronJobName"`
+	}
+	// SeleniumTest is the Schema for the seleniumtests API
+	type SeleniumTest struct {
+		metav1.TypeMeta   `json:",inline"`
+		metav1.ObjectMeta `json:"metadata,omitempty"`
+	
+		Spec   SeleniumTestSpec   `json:"spec,omitempty"`
+		Status SeleniumTestStatus `json:"status,omitempty"`
+	}
+\end{lstlisting}
+
+The reconcile function is the core function responsible for maintaining the desired state of a resource. The reconcile function checks to see if the resource's current state corresponds to the ideal state stated in the resource's Kubernetes manifest.
+
+The Kubernetes API server tells the operator when a change is found in the resource, and the operator then initiates the reconcile function. The reconcile function compares the resource's present state to the desired state listed in the manifest by reading its current state. The reconcile function takes the necessary steps to resolve discrepancies between the desired and current conditions.
+
+The reconcile function, in general, is a crucial part of a Kubernetes operator and, when appropriately used, guarantees that the resources are always kept in the desired state.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\textwidth]{input_arch}
+	\label{fig:input_arch}
+\end{figure}
+
+\subsection{Automated scheduling of the tests}
+
+The operator assigns all workloads to the same namespace where the user provided the CR and the configmap containing the test file to enable comprehensive monitoring between projects. This workload comprises numerous Selenium side runs wrapped in JavaScript code inside a Node.js container. Kubernetes' built-in automation is used for easier maintenance, and the workload is abstracted within pods within jobs within cronjobs.
+
+In order to make sure that a job is consistently created at the appropriate time, the operator creates a cronjob with the specified schedule. The hash code is put after the name of the jobs, which run under the same name as the cronjob.
+
+The test file is accessible within the containers at the "/mnt/config" folder since the operator attached the given configmap as a volume to the job's pod.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\textwidth]{cronjob_automation}
+	\label{fig:cronjob_automation}
+\end{figure}
+
+Without explicitly stating differently, pods use the default service account, severely limiting their capacity to communicate with the cluster. Therefore, the operator has a cluster role with all the permissions the pod's script requires. The operator generates a dedicated service account in the workload namespace for each test and a role binding that links the newly established service account to the previously described cluster role.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\textwidth]{rbac}
+	\label{fig:rbac}
+\end{figure}
+
+The SeleniumTest controller's reconcile method, which has the following syntax (logging, exception handling, comments, etc., are not included here for readability in the documentation), handles the construction or validates the existence of all the objects:
+
+\begin{lstlisting}[language={Go}]
+	func (r *SeleniumTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+		instance := &seleniumv1.SeleniumTest{}
+
+		// Validates the ConfigMap with the given name is present
+		err = r.ensureConfigMap(instance)
+		// Checks the ServiceAccount is present, if not, creates it
+		err = r.ensureServiceAccount(instance)
+		// Checks the RoleBinding is present, if not, creates it to connect the service account to the cluster role
+		err = r.ensureRoleBinding(instance)
+		// Ensure the CronJob is present, if not, creates it with the configmap attached as volume, with the serviceaccount above 
+		err = r.ensureCronJob(instance)
+
+		return ctrl.Result{}, nil
+	}	
+\end{lstlisting}
+
+\subsection{Using Selenium WebDriver for Browser Interactions}
+
+Interactions with web browsers are possible using the Selenium WebDriver tool. It offers a collection of procedures and instructions that mimic user operations, including clicking buttons, inputting text, and moving between pages.
+
+A Node.js container is established with the required Selenium libraries and drivers to use Selenium WebDriver with Node.js with a Selenium Hub deployment (Moon is given as an example in this tutorial, but there are many more possibilities). The container also includes all additional dependencies needed for the tests.
+
+The Selenium WebDriver is used within the container to communicate with the Moon. This entails creating a fresh instance of the appropriate browser, which would then be used to navigate to the desired URL and carry out any necessary interactions described with the .side test files.
+
+Data regarding the test, including page load times, failures, and other performance indicators, is generated while the script runs. Then the test findings are processed and reported to the operator via a custom resource called SeleniumTestResult.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\textwidth]{selenium}
+	\label{fig:selenium}
+\end{figure}
+
+\subsection{SeleniumTestResult CR and exposing results as Prometheus metrics}
+
+A SeleniumTestResult custom resource corresponds to each test, and here is where the pod writes the results. In addition to the operator, its CRD is also deployed, and the operator has a go object, a controller, and a distinct reconcile method to handle it.
+
+The associated go object:
+
+\begin{lstlisting}[language={Go}]
+	// SeleniumTestResultSpec defines the desired state of SeleniumTestResult
+	type SeleniumTestResultSpec struct {
+		Success bool `json:"success"`
+		EndTime int  `json:"endTime"`
+	}
+	type SeleniumTestResultStatus struct {}
+
+	// SeleniumTestResult is the Schema for the seleniumtestresults API
+	type SeleniumTestResult struct {
+		metav1.TypeMeta   `json:",inline"`
+		metav1.ObjectMeta `json:"metadata,omitempty"`
+
+		Spec   SeleniumTestResultSpec   `json:"spec,omitempty"`
+		Status SeleniumTestResultStatus `json:"status,omitempty"`
+	}
+\end{lstlisting}
+
+Every time the SeleniumTestResult is modified, the reconcile function is called. The method uses Prometheus labels to expose the data, making it simple to sort the data for test results by name or namespace.
+
+Metric declaration:
+
+\begin{lstlisting}[language={Go}]
+	var (
+		test_results = prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "selenium_test_results",
+				Help: "0 mean success, 1 means error",
+			},
+			[]string{"test_name", "namespace"},
+		)
+	)
+	func init() {
+		// Register custom metrics with the global prometheus registry
+		metrics.Registry.MustRegister(test_results)
+	}
+\end{lstlisting}
+
+For ease of reading in this documentation, logging and error handling are removed from the reconcile method demonstration below:
+
+\begin{lstlisting}[language={Go}]
+	func (r *SeleniumTestResultReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+		instance := &seleniumv1.SeleniumTestResult{}
+		labels := prometheus.Labels{"test_name": instance.Name, "namespace": instance.Namespace}
+		if instance.Spec.Success {
+			test_results.With(labels).Set(1)
+		} else {
+			test_results.With(labels).Set(0)
+		}
+		return ctrl.Result{}, nil
+	}
+\end{lstlisting}
+
+Metric viewed from a prometheus:
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\textwidth]{prometheus_ui}
+	\label{fig:prometheus_ui}
+\end{figure}
+
 
 
 \lstset{caption={Hello World in C++}, label=src:cpp}

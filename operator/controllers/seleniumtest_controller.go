@@ -249,7 +249,7 @@ func (r *SeleniumTestReconciler) newCronJobForSeleniumTest(instance *seleniumv1.
 	// TODO
 	container := corev1.Container{
 		Name:            "selenium-test",
-		Image:           instance.Spec.Image,
+		Image:           instance.Spec.Repository + "/" + instance.Spec.Image + ":" + instance.Spec.Tag,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Env: []corev1.EnvVar{
 			corev1.EnvVar{Name: "POD_NAME", Value: instance.Name},

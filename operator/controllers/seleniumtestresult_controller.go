@@ -54,9 +54,7 @@ func (r *SeleniumTestResultReconciler) Reconcile(ctx context.Context, req ctrl.R
 	log2 := ctrllog.FromContext(ctx)
 
 	log2.Info("Reconciling SeleniumTestResult", "Request.Namespace", req.Namespace, "Request.Name", req.Name)
-
-	// TODO(user): your logic here
-
+	
 	instance := &seleniumv1.SeleniumTestResult{}
 	err := r.Client.Get(context.Background(), req.NamespacedName, instance)
 	if err != nil {

@@ -28,7 +28,9 @@ type SeleniumTestSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
+	Repository    string `json:"repository"`
 	Image         string `json:"image"`
+	Tag           string `json:"tag"`
 	Schedule      string `json:"schedule"`
 	ConfigMapName string `json:"configMapName"`
 	Retries       string `json:"retries"`
