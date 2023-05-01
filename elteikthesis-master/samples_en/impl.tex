@@ -173,7 +173,7 @@ In conclusion, thorough testing might be difficult because of the dispersed natu
 
 Selenium is a web application testing tool. It automates testing online applications by imitating user behaviors, including button clicks, text entries, and page navigation. Developers can use Selenium to create scripts that automate time-consuming testing processes, saving time and effort compared to manual testing.
 
-Java, Python, C#, Ruby, and JavaScript are just a few programming languages supported by the open-source Selenium tool. Selenium WebDriver, Selenium Grid, and Selenium IDE are some of its various parts.
+Java, Python, C\#, Ruby, and JavaScript are just a few programming languages supported by the open-source Selenium tool. Selenium WebDriver, Selenium Grid, and Selenium IDE are some of its various parts.
 
 A programming interface called Selenium WebDriver enables programmers to automate interactions with web browsers. It offers a selection of techniques for manipulating online components like buttons, text boxes, and drop-down menus, moving between pages, and utilizing browser capabilities like tabs and windows.
 
@@ -185,6 +185,37 @@ Selenium IDE stores test cases in files with .side extensions. They are JSON fil
 
 As a result of imitating user activities, Selenium is a popular testing tool for web applications that automates the testing process. Selenium WebDriver, Selenium Grid, and Selenium IDE are some of its various parts. In order to store test cases, Selenium IDE uses .side files. It also offers a user-friendly interface for developing and running Selenium tests.
 
+
+\subsection{Prometheus, Alerting and Service Monitors}
+
+Popular open-source monitoring software Prometheus gathers, stores, and queries metrics from various sources. It offers a versatile query language and a potent data model that allow users to learn essential things about the functionality and state of their systems. However, more than simply gathering and storing metrics is required; (human) operators must also be informed when specific situations call for their attention. Prometheus alerting and service monitors are helpful in this situation.
+
+Users can create alerting rules in Prometheus that send notifications when specific metrics exceed predetermined thresholds. Users can select from a wide variety of notification channels, including email, Slack, and PagerDuty, to name a few, and these rules can be highly configurable. Additionally, users can use Prometheus' robust query language to develop more intricate alerting scenarios.
+
+On the other hand, service monitors are Kubernetes resources that specify how Prometheus should monitor a particular service. They enable administrators to automatically find services operating in a Kubernetes cluster and set up Prometheus to monitor those services. Service monitors specify which metrics should be collected and how they should be collected. They can also include labels to help organize the data that has been gathered.
+
+Alerting and service monitors work together to give operators the ability to create effective monitoring and alerting systems that can identify problems before they become critical and warn the necessary parties for a quick resolution.
+
+
+\section{The Operator: from Architecture to fine details}
+
+This section discusses the architecture of the thesis project operator, providing all the information necessary to fully comprehend how its many components relate to one another and how their interdependencies operate.
+
+In a nutshell, the operator accepts the SeleniunTest kind of custom resource, which specifies the name, scheduling, browser runner service, and name of the config map holding the selenium .side test file. As a result, the operator constructs a cronjob with the necessary permissions, which, when executed at the specified times, arranges the tests to run on the browser runner service. The test results are subsequently written into a SeleniumTestResult type of CR. The operator responds with its reconciliation logic, which exposes the test results in Prometheus format in a central location for Prometheus-like monitoring solutions to integrate into their alerting chain. Each component will be more thoroughly explained in this section.
+
+In addition, viable other integration methods will be highlighted, demonstrating how adaptably a company can integrate it into its environment without resorting to quirky workarounds or modifying the operator.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\textwidth]{Architecture}
+	\label{fig:architecture}
+\end{figure}
+
+\subsection{User-facing components of the SeleniumTestOperator}
+
+As shown in the user manual, the user needs a test created by the Selenium IDE exported to a .side file, and placed into a config map, to set up a test in the cluster. Additionally, the user must supply a SeleniumTest custom resource containing the necessary data about it. With the operator's deployment, a unique resource definition was also deployed for Kubernetes to comprehend these CRs.
+
+By defining custom resources that are not included in the basic Kubernetes API, Kubernetes Custom Resource Definitions (CRDs) are used to expand the Kubernetes API. Developers can manage essential resources like pods, services, and deployments in the same way that they manage custom resources, thanks to CRDs.
 
 
 \lstset{caption={Hello World in C++}, label=src:cpp}
