@@ -1,19 +1,193 @@
 \chapter{User documentation}
 \label{ch:user}
-This documentation will cover all aspects of the operator's usage, including installation, configuration, and customization. We will also provide examples of how to use the operator to automate the execution of Selenium tests and how to integrate it with other Kubernetes-native tools and services.
+The ability to improve the scalability, agility, and dependability of applications in cloud environments has led to a rise in the popularity of cloud-native development in recent years. The foundation of this strategy is containerization, which offers a standardized and portable way to package and distribute software.
 
+The industry standard for scaling up containerized application management is Kubernetes, a well-known container orchestration technology. In addition to tools for automating these procedures, it offers a complete set of primitives for deploying, scaling, and managing containerized applications.
 
-\section{Enumerations and lists}
+For automated web browser testing of online applications, particularly in continuous integration and continuous delivery (CI/CD) pipelines, Selenium, an open-source testing framework, is crucial. In a cloud-native setting, Selenium testing integration with Kubernetes is essential.
 
-Etiam vel odio ante. Etiam pulvinar nibh quis massa auctor congue. Pellentesque quis odio vitae sapien molestie vestibulum sit amet et quam. Pellentesque vel dui eget enim hendrerit finibus at sit amet libero. Quisque sollicitudin ultrices enim, nec porta magna imperdiet vitae. Cras condimentum nunc dui, eget molestie nunc accumsan vel.
+This project implements a Go-based Kubernetes operator, a custom controller that extends the Kubernetes API and automates the deployment and management of Selenium tests in a Kubernetes cluster while making it easy to integrate into industry-standard monitoring and alerting chains.
 
+This documentation will cover all operator usage aspects, including installation, configuration, and customization. We will also provide examples of how to use the operator to automate the execution of Selenium tests and how to integrate it with other Kubernetes-native tools and services.
+
+\section{Prerequisites of employing the operator}
+
+The operator is designed to be utilized in Kubernetes clusters of business scale, whether they are hosted on public cloud servers or on-premise servers. Although the operator was designed with performance in mind, neither Kubernetes, Selenium hubs nor Prometheus monitoring stacks are intended for local development; however, they are all necessary to show the project's feasibility. Since this tutorial will show it on a local Kubernetes cluster, be aware that hardware-related issues could occur.
+
+Requirements are the followings:
 \begin{itemize}
-	\item Fusce in aliquet neque, in pretium sem.
-	\item Donec tincidunt tellus id lectus pretium fringilla.
-	\item Nunc faucibus, erat pretium tempus tempor, tortor mi fringilla neque, ac congue ex dui vitae mauris.
+	\item Kubernetes cluster (minikube in the manual)
+	\item Shell environment (Linux/Mac OS or Windows with WSL)
+	\item kubectl CLI tool
+	\item make CLI tool
+	\item selenium test exported to .side format
+	\item rented or self-managed Selenium Hub service (moon in the manual) 
+	\item operator-managed Prometheus in the Kubernetes cluster (kube-prometheus in the manual)
 \end{itemize}
 
-Donec dapibus sodales ante, at scelerisque nunc laoreet sit amet. Mauris porttitor tincidunt neque, vel ullamcorper neque pulvinar et. Integer eu lorem euismod, faucibus lectus sed, accumsan felis. Nunc ornare mi at augue vulputate, eu venenatis magna mollis. Nunc sed posuere dui, et varius nulla. Sed mollis nibh augue, eget scelerisque eros ornare nec.
+This manual will demonstrate setting up the following Kubernetes environment before deploying the first automated test:
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\textwidth]{before_tests}
+	\label{fig:before_tests}
+\end{figure}
+
+\subsection{Installing a Minikube cluster}
+
+Before setting up the tools required for running Selenium tests with Kubernetes, a few prerequisites need to be installed. These prerequisites include a Kubernetes cluster, a virtualization tool for Minikube, a shell environment, the kubectl CLI tool, the make CLI tool, and a Selenium test exported to .side format. In this guide, we'll go through each of these prerequisites in detail and show you how to install them on your machine. Once these prerequisites are in place, we can move on to setting up the SeleniumTest Operator and creating custom resources for running Selenium tests.
+
+Before everything else, Windows users has to install WSL by opening the Microsoft Store on Windows and search for "Ubuntu" or any other Linux distribution of choice and launch it.
+
+From now on, shell environment will be used universally between operating systems, meaning shell on either Linux, Mac OS or Windows' WSL.
+
+\begin{itemize}
+	\item First of all, intall kubectl:
+
+	\begin{itemize}
+		\item In the Shell terminal, run the following commands:	
+		\begin{lstlisting}[language=bash]
+			curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
+			chmod +x ./kubectl
+			sudo mv ./kubectl /usr/local/bin/kubectl
+		\end{lstlisting}
+
+		\item Verify that kubectl is installed:
+		\begin{lstlisting}[language=bash]
+			kubectl version --short
+		\end{lstlisting}
+	\end{itemize}
+
+	\item Secondly, to install make, run the following command in the shell terminal:
+	\begin{lstlisting}[language=bash]
+		sudo apt-get install build-essential
+	\end{lstlisting}
+
+	\item Thirdly, to install and configure Minikube:
+
+	\begin{itemize}
+		\item Windows users:	
+		\begin{itemize}
+			\item Open your web browser and go to the Minikube releases page on GitHub (https://github.com/kubernetes/minikube/releases).
+			\item Find the latest release for Windows and download the executable file (e.g., minikube-windows-amd64.exe).
+			\item Move the downloaded executable to a folder that is included in your PATH environment variable. For example, you can move it to the "C:\\Windows\\System32" folder.
+			\item Install a hypervisor for Minikube. For example, to use Hyper-V, run:
+			\begin{lstlisting}[language=bash]
+				dism.exe /Online /Enable-Feature /All /FeatureName:Microsoft-Hyper-V
+			\end{lstlisting}
+		\end{itemize}
+		\item Linux users:
+		\begin{lstlisting}[language=bash]
+			curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+			sudo install minikube-linux-amd64 /usr/local/bin/minikube
+		\end{lstlisting}
+		\item Mac users:
+		\begin{itemize}
+			\item Install Homebrew by running the following command in Terminal:
+			\begin{lstlisting}[language=bash]
+				/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+			\end{lstlisting}
+
+			\item Once Homebrew is installed, you can install minikube by running the following command in Terminal:
+			\begin{lstlisting}[language=bash]
+				brew install minikube
+			\end{lstlisting}
+		\end{itemize}
+		\item After the installation is complete, validate it with the following command:
+		\begin{lstlisting}[language=bash]
+			minikube version
+		\end{lstlisting}	
+	\end{itemize}
+
+	\item Lastly, we need to start Minikube:
+	\begin{itemize}
+		\item Minikube startup under Windows:
+		\begin{lstlisting}[language=bash]
+			minikube start --cpus=4 --memory=8G --disk-size=30G --driver=hyperv
+		\end{lstlisting}
+		\item Minikube startup under MacOS:
+		\begin{lstlisting}[language=bash]
+			minikube start --cpus=4 --memory=8G --disk-size=20G --driver=hyperkit
+		\end{lstlisting}
+		\item Minikube startup under MacOS
+		\begin{lstlisting}[language=bash]
+			minikube start --cpus=4 --memory=8G --disk-size=20G --driver kvm2
+		\end{lstlisting}
+	\end{itemize}
+	\item Moon warns against using Docker as a driver even though it would operate on all three platforms. These should be the absolute minimum resources to be allocated, highly advised to give minikube more if possible.
+	\item Verify that Minikube is running:
+	\begin{lstlisting}[language=bash]
+		kubectl cluster-info
+	\end{lstlisting}
+\end{itemize}
+
+\subsection{Solving kubectl connection problem on Windows}
+
+A configuration file for the kubectl command-line tool for Kubernetes can be found at "~/.kube/config". In addition to the credentials required for cluster authentication, it indicates the Kubernetes cluster with which kubectl should communicate.
+
+Depending on the setup, when installing Minikube, it creates a Kubernetes cluster in a virtual machine or a container. Minikube changes the computer's "~/.kube/config" file to set up kubectl to use this new cluster automatically. As a result, kubectl can communicate with the Minikube cluster.
+
+Windows users encounter a problem since Minikube sets the configuration file at the Windows operating system level, whereas kubectl refers to the configuration file contained in the WSL distribution.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\textwidth]{window_virtualisation}
+	\label{fig:window_virtualisation}
+\end{figure}
+
+We must manually generate the kubeconfig file based on the one Minikube created to fix the problem. Although the two files will be very similar, there will be a few minor adjustments because one was created for Windows and the other for Linux.
+
+This is how the new kubeconfig file should appear:
+
+\begin{lstlisting}[language=bash]
+	apiVersion: v1
+	clusters:
+	- cluster:
+		certificate-authority: /mnt/c/Users/Your_User/.minikube/ca.crt
+		extensions:
+		- extension:
+			last-update: Sat, 18 Mar 2023 17:26:55 CET
+			provider: minikube.sigs.k8s.io
+			version: v1.27.0
+		  name: cluster_info
+		server: https://127.0.0.1:8443
+	  name: minikube
+	contexts:
+	- context:
+		cluster: minikube
+		extensions:
+		- extension:
+			last-update: Tue, 02 May 2023 22:28:36 CEST
+			provider: minikube.sigs.k8s.io
+			version: v1.27.0
+		  name: context_info
+		namespace: default
+		user: minikube
+	  name: minikube
+	current-context: minikube
+	kind: Config
+	preferences: {}
+	users:
+	- name: minikube
+	  user:
+		client-certificate: /mnt/c/Users/Your_User/.minikube/profiles/minikube/client.crt
+		client-key: /mnt/c/Users/Your_User/.minikube/profiles/minikube/client.key
+\end{lstlisting}
+
+After creating the file, run the following command in the WSL terminal:
+\begin{lstlisting}[language=bash]
+	export KUBECONFIG=path/to/your/kubeconfig
+\end{lstlisting}
+
+Lastly, verify that Minikube is reachable:
+\begin{lstlisting}[language=bash]
+	kubectl cluster-info
+\end{lstlisting}
+
+\subsection{Deploying the required applications to the cluster}
+
+
+
 
 \begin{enumerate}
 	\item\label{step:first} Donec pretium et quam a cursus. Ut sollicitudin tempus urna et mollis.

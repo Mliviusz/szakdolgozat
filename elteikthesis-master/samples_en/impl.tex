@@ -327,8 +327,14 @@ Data regarding the test, including page load times, failures, and other performa
 
 A SeleniumTestResult custom resource corresponds to each test, and here is where the pod writes the results. In addition to the operator, its CRD is also deployed, and the operator has a go object, a controller, and a distinct reconcile method to handle it.
 
-The associated go object:
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\textwidth]{prometheus}
+	\label{fig:prometheus}
+\end{figure}
 
+The associated go object:
+    
 \begin{lstlisting}[language={Go}]
 	// SeleniumTestResultSpec defines the desired state of SeleniumTestResult
 	type SeleniumTestResultSpec struct {
@@ -382,7 +388,7 @@ For ease of reading in this documentation, logging and error handling are remove
 	}
 \end{lstlisting}
 
-Metric viewed from a prometheus:
+The metric viewed from a prometheus:
 
 \begin{figure}[H]
 	\centering
