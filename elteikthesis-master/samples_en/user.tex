@@ -23,6 +23,7 @@ Requirements are the followings:
 	\item selenium test exported to .side format
 	\item rented or self-managed Selenium Hub service (moon in the manual) 
 	\item operator-managed Prometheus in the Kubernetes cluster (kube-prometheus in the manual)
+	\item Helm CLI tool for deploying all the above
 \end{itemize}
 
 This manual will demonstrate setting up the following Kubernetes environment before deploying the first automated test:
@@ -45,7 +46,7 @@ From now on, shell environment will be used universally between operating system
 	\item First of all, intall kubectl:
 
 	\begin{itemize}
-		\item In the Shell terminal, run the following commands:	
+		\item In the shell terminal, run the following commands:	
 		\begin{lstlisting}[language=bash]
 			curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
 			chmod +x ./kubectl
@@ -62,8 +63,15 @@ From now on, shell environment will be used universally between operating system
 	\begin{lstlisting}[language=bash]
 		sudo apt-get install build-essential
 	\end{lstlisting}
+	
+	\item Thirdly, to install helm, run In the shell terminal:
+	\begin{lstlisting}[language=bash]
+		curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+		chmod 700 get_helm.sh
+		./get_helm.sh
+	\end{lstlisting}
 
-	\item Thirdly, to install and configure Minikube:
+	\item Fourthly, to install and configure Minikube:
 
 	\begin{itemize}
 		\item Windows users:	
@@ -71,10 +79,7 @@ From now on, shell environment will be used universally between operating system
 			\item Open your web browser and go to the Minikube releases page on GitHub (https://github.com/kubernetes/minikube/releases).
 			\item Find the latest release for Windows and download the executable file (e.g., minikube-windows-amd64.exe).
 			\item Move the downloaded executable to a folder that is included in your PATH environment variable. For example, you can move it to the "C:\\Windows\\System32" folder.
-			\item Install a hypervisor for Minikube. For example, to use Hyper-V, run:
-			\begin{lstlisting}[language=bash]
-				dism.exe /Online /Enable-Feature /All /FeatureName:Microsoft-Hyper-V
-			\end{lstlisting}
+			\item Install Docker desktop for Minikube from its offical site: https://www.docker.com/products/docker-desktop/
 		\end{itemize}
 		\item Linux users:
 		\begin{lstlisting}[language=bash]
@@ -103,7 +108,7 @@ From now on, shell environment will be used universally between operating system
 	\begin{itemize}
 		\item Minikube startup under Windows:
 		\begin{lstlisting}[language=bash]
-			minikube start --cpus=4 --memory=8G --disk-size=30G --driver=hyperv
+			minikube start --cpus=4 --memory=8G --disk-size=30G --driver=docker
 		\end{lstlisting}
 		\item Minikube startup under MacOS:
 		\begin{lstlisting}[language=bash]
@@ -114,7 +119,7 @@ From now on, shell environment will be used universally between operating system
 			minikube start --cpus=4 --memory=8G --disk-size=20G --driver kvm2
 		\end{lstlisting}
 	\end{itemize}
-	\item Moon warns against using Docker as a driver even though it would operate on all three platforms. These should be the absolute minimum resources to be allocated, highly advised to give minikube more if possible.
+	\item Even though Moon advises against using Docker as a driver, it is necessary from a networking perspective for Windows users in order to be able to access the cluster from WSL. Providing Minikube with more resources is strongly recommended if possible, but these should be the absolute minimum.
 	\item Verify that Minikube is running:
 	\begin{lstlisting}[language=bash]
 		kubectl cluster-info
@@ -185,6 +190,83 @@ Lastly, verify that Minikube is reachable:
 \end{lstlisting}
 
 \subsection{Deploying the required applications to the cluster}
+
+This section will set up the kube-prometheus, Moon, and seleniumTest operator on our Kubernetes cluster. These tools are essential for testing and monitoring our cluster to ensure it runs smoothly and dependably. For our cluster, kube-prometheus offers a reliable monitoring solution that enables us to keep an eye on critical parameters like resource utilization and application performance. While the SeleniumTest Operator automates the deployment and upkeep of those tests in our Kubernetes cluster, Moon is a Selenium Grid implementation that we will use to run our Selenium tests. 
+
+We will only deploy the Prometheus operator portion of the kube-prometheus stack because of the limited hardware resources available locally, as the other components are useless for this demonstration. Enter the operator repository to get started, then execute the following commands:
+\begin{lstlisting}[language=bash]
+	kubectl apply --server-side -f prometheus/setup
+	kubectl wait --for condition=Established --all CustomResourceDefinition --namespace=monitoring
+	kubectl apply -f prometheus/
+\end{lstlisting}
+
+Whenever there are issues, visit kube-prometheus's official github page for more details on how to deploy it: https://github.com/prometheus-operator/kube-prometheus
+
+The following commands will deploy Moon, the Selenium Grid implementation, so that the tests may be run:
+\begin{lstlisting}[language=bash]
+	helm repo add aerokube https://charts.aerokube.com/
+	helm repo update
+	kubectl create namespace moon
+	helm upgrade --install -f moon_values.yaml -n moon moon aerokube/moon2
+\end{lstlisting}
+Ingress controller is disabled in the moon_values.yaml file because we won't attempt to contact Moon from outside the cluster.
+
+The seleniumTest operator can then be deployed; perform the following steps from the operator's repository:
+\begin{lstlisting}[language=bash]
+	make deploy IMG=quay.io/molnar_liviusz/selenium-test-operator:v0.0.24
+\end{lstlisting}
+
+Finally, we need to create and change the context to the namespace for our project, where we will launch all of the Selenium tests:
+\begin{lstlisting}[language=bash]
+	kubectl create namespace testing-ns
+	kubectl config set-context --current --namespace=testing-ns
+\end{lstlisting}
+
+Downloading Lens is advised for simpler cluster management (https://k8slens.dev/). Lens offers a straightforward and understandable graphical user interface for controlling Kubernetes clusters. Users can navigate and change resources, view their cluster's current state, and keep an eye on performance indicators in real time. Additionally, Lens supports numerous clusters and offers a single location for managing them all. Lens is a fantastic alternative for developers and system administrators who need to work with Kubernetes on a regular basis due to its user-friendly interface and extensive feature set.
+
+The outcome of all this is that we now have our cluster configured, achieving the cluster state shown in the previous architecture diagram, with the seleniumTest operator, Prometheus, to query our operator's metrics (including the test results), and Moon deployment as a Selenium Grid implementation. The test recordings are the final component needed to deploy tests.
+
+\subsection{Recorded selenium tests with Selenium IDE}
+
+Selenium IDE is a browser extension that may be used to record user interactions with a web application. The user can export the recorded interactions in the ".side" (Selenium Integrated Development Environment) file format once the recording is finished. This file may then be used with Selenium WebDriver to reliably and repeatedly automate the same interactions. The ".side" file provides details on the actions taken, the web page elements that were the targets, and any additional data like input values or anticipated outcomes. Developers and testers can save time and effort while creating and maintaining automated tests by utilizing Selenium IDE to record and export interactions into a ".side" file.
+
+To create a selenium test, open the extension > Record a new test in a new project > add a project name > add the URL where the browser should open at the beginning of the test > start recording > finish recording:
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\textwidth]{seleniumide1}
+	\label{fig:seleniumide1}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\textwidth]{seleniumide2}
+	\label{fig:seleniumide2}
+\end{figure}
+
+Replacing the actions' default target variables with a specific XPath target is advised to increase test reliability. Recommend doing this while utilizing the "XPath Helper" browser plugin and the browsers' inspect mode:
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\textwidth]{xpathhelper}
+	\label{fig:xpathhelper}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\textwidth]{seleniumide3}
+	\label{fig:seleniumide3}
+\end{figure}
+
+Several tests can be conducted within a single test project, and sophisticated Selenium Grid implementations, such as Moon, can perform these tests in a paralyzed fashion to increase efficiency and shorten the testing time. Once finished, save the project into the default .side extension.
+
+
+
+
+
+
+
+
 
 
 
