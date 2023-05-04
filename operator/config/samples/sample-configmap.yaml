@@ -1,0 +1,130 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: testcode
+data:
+  # file-like keys
+  freemail.side: |
+    {
+      "id": "02faada0-52b8-49fe-95cc-d403a5ef9dcd",
+      "version": "2.0",
+      "name": "Operator",
+      "url": "https://accounts.freemail.hu",
+      "tests": [{
+        "id": "cf677198-9658-455c-b524-c2fa55ad59f7",
+        "name": "login",
+        "commands": [{
+          "id": "31de9648-b82a-4322-90da-65ee6a89a9f5",
+          "comment": "",
+          "command": "open",
+          "target": "/a/login",
+          "targets": [],
+          "value": ""
+        }, {
+          "id": "acd4673e-c982-4747-a7ae-29a2dfcb80ed",
+          "comment": "",
+          "command": "setWindowSize",
+          "target": "1600x900",
+          "targets": [],
+          "value": ""
+        }, {
+          "id": "7038506e-3fe3-4760-8489-06052bdc2112",
+          "comment": "",
+          "command": "click",
+          "target": "xpath=//button[@aria-label=\"Beleegyezés\"]",
+          "targets": [],
+          "value": ""
+        }, {
+          "id": "10213f09-f137-4567-b06c-83e278a96251",
+          "comment": "",
+          "command": "click",
+          "target": "xpath=//input[@type=\"email\"]",
+          "targets": [],
+          "value": ""
+        }, {
+          "id": "028a6d9f-4362-4991-a824-48e0f64b0800",
+          "comment": "",
+          "command": "type",
+          "target": "id=username",
+          "targets": [
+            ["id=username", "id"],
+            ["name=email", "name"],
+            ["css=#username", "css:finder"],
+            ["xpath=//input[@id='username']", "xpath:attributes"],
+            ["xpath=//div[@id='__next']/div/div/div/div[3]/div/div[2]/form/div/div/div/input", "xpath:idRelative"],
+            ["xpath=//input", "xpath:position"]
+          ],
+          "value": "selenium.test"
+        }, {
+          "id": "9fa34866-8f04-404c-957b-1b4afae3aa1a",
+          "comment": "",
+          "command": "click",
+          "target": "xpath=//input[@type=\"password\"]",
+          "targets": [],
+          "value": ""
+        }, {
+          "id": "b625940d-eb93-4add-b074-e677e7662609",
+          "comment": "",
+          "command": "type",
+          "target": "id=password",
+          "targets": [
+            ["id=password", "id"],
+            ["name=password", "name"],
+            ["css=#password", "css:finder"],
+            ["xpath=//input[@id='password']", "xpath:attributes"],
+            ["xpath=//div[@id='__next']/div/div/div/div[3]/div/div[2]/form/div[2]/div/div/div/input", "xpath:idRelative"],
+            ["xpath=//div[2]/div/div/div/input", "xpath:position"]
+          ],
+          "value": "SeleniumTest1"
+        }, {
+          "id": "0c1d0df1-4db1-4a96-889e-4802695c15f8",
+          "comment": "",
+          "command": "click",
+          "target": "xpath=//button[@type=\"submit\"]",
+          "targets": [],
+          "value": ""
+        }, {
+          "id": "210e4af1-da75-41d0-bb6d-3db13995d7ab",
+          "comment": "",
+          "command": "click",
+          "target": "xpath=//button[@class=\"Button-root-0-2-55 Button-size-medium-0-2-72 Button-variant-text-0-2-74 Button-color-default-0-2-79 Button-hover-0-2-59\"]",
+          "targets": [
+            ["css=.Button-variant-contained-0-2-75 > .Button-text-0-2-63", "css:finder"],
+            ["xpath=//div[@id='__next']/div/div/div/div[3]/div/div[2]/form/div[3]/button/div", "xpath:idRelative"],
+            ["xpath=//div[3]/button/div", "xpath:position"]
+          ],
+          "value": ""
+        }, {
+          "id": "251df712-79e2-42b4-b4b2-e148470d50c8",
+          "comment": "",
+          "command": "waitForElementNotPresent",
+          "target": "//div[@class=\"goaL-interstitial-content-close\"]",
+          "targets": [],
+          "value": "30000"
+        }, {
+          "id": "fa7113cc-9d9e-46c1-9422-53f1d8babe1c",
+          "comment": "",
+          "command": "click",
+          "target": "xpath=//button[@class=\"Button-root-0-2-243 Button-iconButton-0-2-244 Button-size-medium-0-2-260 Button-variant-text-0-2-262 Button-color-default-0-2-267 Button-hover-0-2-247\"]",
+          "targets": [],
+          "value": ""
+        }, {
+          "id": "259b5c62-be6a-4070-a897-468168198139",
+          "comment": "",
+          "command": "close",
+          "target": "",
+          "targets": [],
+          "value": ""
+        }]
+      }],
+      "suites": [{
+        "id": "1aa8e4c1-6177-4d9f-a8ca-82c2c093b5dd",
+        "name": "Default Suite",
+        "persistSession": false,
+        "parallel": false,
+        "timeout": 300,
+        "tests": ["cf677198-9658-455c-b524-c2fa55ad59f7"]
+      }],
+      "urls": ["https://accounts.freemail.hu/"],
+      "plugins": []
+    }
