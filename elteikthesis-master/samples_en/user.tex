@@ -32,6 +32,7 @@ This manual will demonstrate setting up the following Kubernetes environment bef
 	\centering
 	\includegraphics[width=1\textwidth]{before_tests}
 	\label{fig:before_tests}
+	\caption{Architecture without running tests}
 \end{figure}
 
 \subsection{Installing a Minikube cluster}
@@ -47,6 +48,7 @@ From now on, shell environment will be used universally between operating system
 
 	\begin{itemize}
 		\item In the shell terminal, run the following commands:	
+		\lstset{caption={Installing kubectl}}
 		\begin{lstlisting}[language=bash]
 			curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
 			chmod +x ./kubectl
@@ -54,17 +56,20 @@ From now on, shell environment will be used universally between operating system
 		\end{lstlisting}
 
 		\item Verify that kubectl is installed:
+		\lstset{caption={Verifying kubectl}}
 		\begin{lstlisting}[language=bash]
 			kubectl version --short
 		\end{lstlisting}
 	\end{itemize}
 
 	\item Secondly, to install make, run the following command in the shell terminal:
+	\lstset{caption={Installing make}}
 	\begin{lstlisting}[language=bash]
 		sudo apt-get install build-essential
 	\end{lstlisting}
 	
 	\item Thirdly, to install helm, run In the shell terminal:
+	\lstset{caption={Installing helm}}
 	\begin{lstlisting}[language=bash]
 		curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
 		chmod 700 get_helm.sh
@@ -82,6 +87,7 @@ From now on, shell environment will be used universally between operating system
 			\item Install Docker desktop for Minikube from its offical site: https://www.docker.com/products/docker-desktop/
 		\end{itemize}
 		\item Linux users:
+		\lstset{caption={Installing minikube cli for Linux}}
 		\begin{lstlisting}[language=bash]
 			curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
 			sudo install minikube-linux-amd64 /usr/local/bin/minikube
@@ -89,16 +95,19 @@ From now on, shell environment will be used universally between operating system
 		\item Mac users:
 		\begin{itemize}
 			\item Install Homebrew by running the following command in Terminal:
+			\lstset{caption={Installing homebrew cli for Mac}}
 			\begin{lstlisting}[language=bash]
 				/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 			\end{lstlisting}
 
 			\item Once Homebrew is installed, you can install minikube by running the following command in Terminal:
+			\lstset{caption={Installing minikube cli for Mac}}
 			\begin{lstlisting}[language=bash]
 				brew install minikube
 			\end{lstlisting}
 		\end{itemize}
 		\item After the installation is complete, validate it with the following command:
+		\lstset{caption={Verifying minikube cli tool}}
 		\begin{lstlisting}[language=bash]
 			minikube version
 		\end{lstlisting}	
@@ -107,20 +116,24 @@ From now on, shell environment will be used universally between operating system
 	\item Lastly, we need to start Minikube:
 	\begin{itemize}
 		\item Minikube startup under Windows:
+		\lstset{caption={Starting minikube for Windows}}
 		\begin{lstlisting}[language=bash]
 			minikube start --cpus=4 --memory=8G --disk-size=30G --driver=docker
 		\end{lstlisting}
 		\item Minikube startup under MacOS:
+		\lstset{caption={Starting minikube for MacOS}}
 		\begin{lstlisting}[language=bash]
 			minikube start --cpus=4 --memory=8G --disk-size=20G --driver=hyperkit
 		\end{lstlisting}
-		\item Minikube startup under MacOS
+		\item Minikube startup under Linux
+		\lstset{caption={Starting minikube for Linux}}
 		\begin{lstlisting}[language=bash]
 			minikube start --cpus=4 --memory=8G --disk-size=20G --driver kvm2
 		\end{lstlisting}
 	\end{itemize}
 	\item Even though Moon advises against using Docker as a driver, it is necessary from a networking perspective for Windows users in order to be able to access the cluster from WSL. Providing Minikube with more resources is strongly recommended if possible, but these should be the absolute minimum.
 	\item Verify that Minikube is running:
+	\lstset{caption={Verifying minikube cluster}}
 	\begin{lstlisting}[language=bash]
 		kubectl cluster-info
 	\end{lstlisting}
@@ -138,12 +151,13 @@ Windows users encounter a problem since Minikube sets the configuration file at 
 	\centering
 	\includegraphics[width=1\textwidth]{window_virtualisation}
 	\label{fig:window_virtualisation}
+	\caption{Virtualization difference between WSL and Unix systems}
 \end{figure}
 
 We must manually generate the kubeconfig file based on the one Minikube created to fix the problem. Although the two files will be very similar, there will be a few minor adjustments because one was created for Windows and the other for Linux.
 
 This is how the new kubeconfig file should appear:
-
+\lstset{caption={Example kubeconfig file}}
 \begin{lstlisting}[language=bash]
 	apiVersion: v1
 	clusters:
@@ -180,11 +194,13 @@ This is how the new kubeconfig file should appear:
 \end{lstlisting}
 
 After creating the file, run the following command in the WSL terminal:
+\lstset{caption={Setting Kubeconfig}}
 \begin{lstlisting}[language=bash]
 	export KUBECONFIG=path/to/your/kubeconfig
 \end{lstlisting}
 
 Lastly, verify that Minikube is reachable:
+\lstset{caption={Validate Minikube}}
 \begin{lstlisting}[language=bash]
 	kubectl cluster-info
 \end{lstlisting}
@@ -194,6 +210,7 @@ Lastly, verify that Minikube is reachable:
 This section will set up the kube-prometheus, Moon, and seleniumTest operator on our Kubernetes cluster. These tools are essential for testing and monitoring our cluster to ensure it runs smoothly and dependably. For our cluster, kube-prometheus offers a reliable monitoring solution that enables us to keep an eye on critical parameters like resource utilization and application performance. While the SeleniumTest Operator automates the deployment and upkeep of those tests in our Kubernetes cluster, Moon is a Selenium Grid implementation that we will use to run our Selenium tests. 
 
 We will only deploy the Prometheus operator portion of the kube-prometheus stack because of the limited hardware resources available locally, as the other components are useless for this demonstration. Enter the operator repository to get started, then execute the following commands:
+\lstset{caption={Deploying Prometheus operator}}
 \begin{lstlisting}[language=bash]
 	kubectl apply --server-side -f prometheus/setup
 	kubectl wait --for condition=Established --all CustomResourceDefinition --namespace=monitoring
@@ -203,6 +220,7 @@ We will only deploy the Prometheus operator portion of the kube-prometheus stack
 Whenever there are issues, visit kube-prometheus's official github page for more details on how to deploy it: https://github.com/prometheus-operator/kube-prometheus
 
 The following commands will deploy Moon, the Selenium Grid implementation, so that the tests may be run:
+\lstset{caption={Installing moon}}
 \begin{lstlisting}[language=bash]
 	helm repo add aerokube https://charts.aerokube.com/
 	helm repo update
@@ -212,11 +230,13 @@ The following commands will deploy Moon, the Selenium Grid implementation, so th
 Ingress controller is disabled in the moon_values.yaml file because we won't attempt to contact Moon from outside the cluster.
 
 The seleniumTest operator can then be deployed; perform the following steps from the operator's repository:
+\lstset{caption={Deploying of operator}}
 \begin{lstlisting}[language=bash]
 	make deploy IMG=quay.io/molnar_liviusz/selenium-test-operator:v0.0.24
 \end{lstlisting}
 
 Finally, we need to create and change the context to the namespace for our project, where we will launch all of the Selenium tests:
+\lstset{caption={Creating testing namespace}}
 \begin{lstlisting}[language=bash]
 	kubectl create namespace testing-ns
 	kubectl config set-context --current --namespace=testing-ns
@@ -236,12 +256,14 @@ To create a selenium test, open the extension > Record a new test in a new proje
 	\centering
 	\includegraphics[width=1\textwidth]{seleniumide1}
 	\label{fig:seleniumide1}
+	\caption{SeleniumIDE 1}
 \end{figure}
 
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=1\textwidth]{seleniumide2}
 	\label{fig:seleniumide2}
+	\caption{SeleniumIDE 2}
 \end{figure}
 
 Replacing the actions' default target variables with a specific XPath target is advised to increase test reliability. Recommend doing this while utilizing the "XPath Helper" browser plugin and the browsers' inspect mode:
@@ -250,12 +272,14 @@ Replacing the actions' default target variables with a specific XPath target is 
 	\centering
 	\includegraphics[width=1\textwidth]{xpathhelper}
 	\label{fig:xpathhelper}
+	\caption{XPath Helper}
 \end{figure}
 
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=1\textwidth]{seleniumide3}
 	\label{fig:seleniumide3}
+	\caption{SeleniumIDE 3}
 \end{figure}
 
 Several tests can be conducted within a single test project, and sophisticated Selenium Grid implementations, such as Moon, can perform these tests in a paralyzed fashion to increase efficiency and shorten the testing time. Once finished, save the project into the default .side extension.
@@ -265,6 +289,7 @@ Several tests can be conducted within a single test project, and sophisticated S
 Automating the running of Selenium tests on a Kubernetes cluster requires a configuration file for the test, a ConfigMap that stores the .side file. A custom resource called SeleniumTest needs to be created to define the desired state of the test, such as the image to be used, the Selenium Grid to connect to, and the schedule for running the test. With these two components in place, Kubernetes can automatically run the Selenium test according to the specified schedule, greatly simplifying web application testing.
 
 The configmap looks resembles the following:
+\lstset{caption={Example configmap with .side test}}
 \begin{lstlisting}[language={Go}]
 	apiVersion: v1
 	kind: ConfigMap
@@ -290,6 +315,7 @@ The configmap looks resembles the following:
 \end{lstlisting}
 
 The following is the syntax for the seleniumTest custom resource:
+\lstset{caption={SeleniumTest CR yaml format}}
 \begin{lstlisting}[language={Go}]
 	apiVersion: selenium.mliviusz.com/v1
 	kind: SeleniumTest
@@ -324,6 +350,7 @@ The SeleniumTest object's desired state is specified in the spec section of the 
 \end{itemize}
 
 To deploy the test, use the following commands:
+\lstset{caption={Deploying example tests}}
 \begin{lstlisting}[language=bash]
 	kubectl apply -f testfiles/testcode-configmap.yaml
 	kubectl apply -f testfiles/sample-seleniumtest.yaml
@@ -334,4 +361,5 @@ Following the previous steps, the test results can be viewed on Prometheus, wher
 	\centering
 	\includegraphics[width=1\textwidth]{prometheus_ui}
 	\label{fig:prometheus_ui}
+	\caption{Seleniumtest metric within Prometheus}
 \end{figure}

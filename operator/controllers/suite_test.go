@@ -20,7 +20,9 @@ import (
 	"fmt"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -83,29 +85,29 @@ var _ = AfterSuite(func() {
 
 const namespace = "operator-system"
 
-var _ = Describe("e2e testing of automating a test", func() {
+var _ = Describe("e2e testing of automating a test", Ordered, func() {
 	BeforeAll(func() {
 		// Moon is installed in this test
 		By("Creating moon namespace")
 		cmd := exec.Command("kubectl", "create", "ns", "moon")
-		_, _ = utils.Run(cmd)
+		_, _ = Run(cmd)
 
 		By("Installing Moon")
-		Expect(utils.InstallMoon()).To(Succeed())
+		Expect(InstallMoon()).To(Succeed())
 	})
 
 	Context("SeleniumTest Operator", func() {
 		It("should run successfully", func() {
 			var controllerPodName string
 			var err error
-			projectDir, _ := utils.GetProjectDir()
+			projectDir, _ := GetProjectDir()
 
 			// operatorImage stores the name of the image used in the example
 			var operatorImage = "quay.io/molnar_liviusz/selenium-test-operator:v0.0.24"
 
 			By("deploying the SeleniumTest operator' controller-manager")
-			cmd = exec.Command("make", "deploy", fmt.Sprintf("IMG=%s", operatorImage))
-			outputMake, err := utils.Run(cmd)
+			var cmd = exec.Command("make", "deploy", fmt.Sprintf("IMG=%s", operatorImage))
+			_, err = Run(cmd)
 			ExpectWithOffset(1, err).NotTo(HaveOccurred())
 
 			By("validating that the controller-manager pod is running as expected")
@@ -117,9 +119,9 @@ var _ = Describe("e2e testing of automating a test", func() {
 						"{{ \"\\n\" }}{{ end }}{{ end }}",
 					"-n", namespace,
 				)
-				podOutput, err := utils.Run(cmd)
+				podOutput, err := Run(cmd)
 				ExpectWithOffset(2, err).NotTo(HaveOccurred())
-				podNames := utils.GetNonEmptyLines(string(podOutput))
+				podNames := GetNonEmptyLines(string(podOutput))
 				if len(podNames) != 1 {
 					return fmt.Errorf("expect 1 controller pods running, but got %d", len(podNames))
 				}
@@ -131,7 +133,7 @@ var _ = Describe("e2e testing of automating a test", func() {
 					"pods", controllerPodName, "-o", "jsonpath={.status.phase}",
 					"-n", namespace,
 				)
-				status, err := utils.Run(cmd)
+				status, err := Run(cmd)
 				ExpectWithOffset(2, err).NotTo(HaveOccurred())
 				if string(status) != "Running" {
 					return fmt.Errorf("controller pod in %s status", status)
@@ -144,43 +146,41 @@ var _ = Describe("e2e testing of automating a test", func() {
 			EventuallyWithOffset(1, func() error {
 				cmd = exec.Command("kubectl", "apply", "-f", filepath.Join(projectDir,
 					"config/samples/sample-configmap.yaml"), "-n", namespace)
-				_, err = utils.Run(cmd)
+				_, err = Run(cmd)
 				return err
 			}, time.Minute, time.Second).Should(Succeed())
 
-			By("creating an instance of the Memcached Operand(CR)")
+			By("creating an instance of the SeleniumTest(CR)")
 			EventuallyWithOffset(1, func() error {
 				cmd = exec.Command("kubectl", "apply", "-f", filepath.Join(projectDir,
 					"config/samples/selenium_v1_seleniumtest.yaml"), "-n", namespace)
-				_, err = utils.Run(cmd)
+				_, err = Run(cmd)
 				return err
 			}, time.Minute, time.Second).Should(Succeed())
 
 			By("validating that the SeleniumTestResult custom resource is created or updated")
-			getStatus := func() error {
+			EventuallyWithOffset(1, func() error {
 				cmd = exec.Command("kubectl", "get", "seleniumtestresult",
 					"seleniumtest-sample", "-o", "jsonpath={.metadata.creationTimestamp}",
 					"-n", namespace,
 				)
-				body, err := utils.Run(cmd)
-				var time = body.metadata.creationTimestamp
-				fmt.Println(string(body))
+				time, err := Run(cmd)
+				fmt.Println(string(time))
 				ExpectWithOffset(2, err).NotTo(HaveOccurred())
 				if !strings.Contains(string(time), ":") {
 					return fmt.Errorf("SeleniumTestResult was not created")
 				}
 				return nil
-			}
-			Eventually(getStatus, time.Minute, time.Second).Should(Succeed())
+			}, 5*time.Minute, time.Second).Should(Succeed())
 		})
 	})
 
 	AfterAll(func() {
 		By("Uninstalling Moon")
-		utils.UninstallPrometheusOperator()
+		UninstallMoon()
 
 		By("Removing moon namespace")
 		cmd := exec.Command("kubectl", "delete", "ns", "moon")
-		_, _ = utils.Run(cmd)
+		_, _ = Run(cmd)
 	})
 })

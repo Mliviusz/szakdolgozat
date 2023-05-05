@@ -24,7 +24,7 @@ func warnError(err error) {
 
 // InstallPrometheusOperator installs the prometheus Operator to be used to export the enabled metrics.
 func InstallMoon() error {
-	cmd := exec.Command("helm", "upgrade", "--install", "n", "moon", "moon", "aerokube/moon2")
+	cmd := exec.Command("helm", "upgrade", "--install", "-n", "moon", "moon", "aerokube/moon2")
 	_, err := Run(cmd)
 	return err
 }
@@ -47,7 +47,7 @@ func Run(cmd *exec.Cmd) ([]byte, error) {
 }
 
 // UninstallPrometheusOperator uninstalls the prometheus
-func UninstallInstallMoon() {
+func UninstallMoon() {
 	cmd := exec.Command("helm", "uninstall", "moon")
 	if _, err := Run(cmd); err != nil {
 		warnError(err)
@@ -74,6 +74,6 @@ func GetProjectDir() (string, error) {
 	if err != nil {
 		return wd, err
 	}
-	wd = strings.Replace(wd, "/controllers/suite", "", -1)
+	wd = strings.Replace(wd, "/controllers", "", -1)
 	return wd, nil
 }

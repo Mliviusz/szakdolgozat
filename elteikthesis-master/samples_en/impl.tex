@@ -35,6 +35,7 @@ One of the key distinctions is how virtual machines and containers use their res
 	\centering
 	\includegraphics[width=1\textwidth]{containers-vs-virtual-machines}
 	\label{fig:container-vs-vm}
+	\caption{Containers vs Virtual Machines}
 \end{figure}
 
 The starting times of virtual machines and containers are another distinction. Virtual machines typically take longer to start up because a complete operating system must be booted. In contrast, containers start up relatively instantaneously because just the containerized program needs to be started.
@@ -209,6 +210,7 @@ In addition, viable other integration methods will be highlighted, demonstrating
 	\centering
 	\includegraphics[width=1\textwidth]{Architecture}
 	\label{fig:architecture}
+	\caption{Whole Architecture}
 \end{figure}
 
 \subsection{User-facing components of the SeleniumTestOperator}
@@ -228,7 +230,7 @@ Typically, the CRD YAML file contains the following data:
 \end{itemize}
 
 Each CRD has a corresponding go object defined within the operator, as well as a reconcile function:
-
+\lstset{caption={SeleniumTestResult CR go representation}}
 \begin{lstlisting}[language={Go}]
 	// SeleniumTestSpec defines the desired state of SeleniumTest
 	type SeleniumTestSpec struct {
@@ -264,6 +266,7 @@ The reconcile function, in general, is a crucial part of a Kubernetes operator a
 	\centering
 	\includegraphics[width=1\textwidth]{input_arch}
 	\label{fig:input_arch}
+	\caption{Input part of Architecture}
 \end{figure}
 
 \subsection{Automated scheduling of the tests}
@@ -278,6 +281,7 @@ The test file is accessible within the containers at the "/mnt/config" folder si
 	\centering
 	\includegraphics[width=1\textwidth]{cronjob_automation}
 	\label{fig:cronjob_automation}
+	\caption{Test automation part of Architecture}
 \end{figure}
 
 Without explicitly stating differently, pods use the default service account, severely limiting their capacity to communicate with the cluster. Therefore, the operator has a cluster role with all the permissions the pod's script requires. The operator generates a dedicated service account in the workload namespace for each test and a role binding that links the newly established service account to the previously described cluster role.
@@ -286,10 +290,11 @@ Without explicitly stating differently, pods use the default service account, se
 	\centering
 	\includegraphics[width=1\textwidth]{rbac}
 	\label{fig:rbac}
+	\caption{RBAC part of Architecture}
 \end{figure}
 
 The SeleniumTest controller's reconcile method, which has the following syntax (logging, exception handling, comments, etc., are not included here for readability in the documentation), handles the construction or validates the existence of all the objects:
-
+\lstset{caption={Stripped SeleniumTest reconciler}}
 \begin{lstlisting}[language={Go}]
 	func (r *SeleniumTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 		instance := &seleniumv1.SeleniumTest{}
@@ -321,6 +326,7 @@ Data regarding the test, including page load times, failures, and other performa
 	\centering
 	\includegraphics[width=1\textwidth]{selenium}
 	\label{fig:selenium}
+	\caption{SeleniumGrid interaction}
 \end{figure}
 
 \subsection{SeleniumTestResult CR and exposing results as Prometheus metrics}
@@ -331,10 +337,11 @@ A SeleniumTestResult custom resource corresponds to each test, and here is where
 	\centering
 	\includegraphics[width=1\textwidth]{prometheus}
 	\label{fig:prometheus}
+	\caption{Result aggregation part of Architecure}
 \end{figure}
 
 The associated go object:
-    
+\lstset{caption={SeleniumTestResult CR go representation}}
 \begin{lstlisting}[language={Go}]
 	// SeleniumTestResultSpec defines the desired state of SeleniumTestResult
 	type SeleniumTestResultSpec struct {
@@ -357,6 +364,7 @@ Every time the SeleniumTestResult is modified, the reconcile function is called.
 
 Metric declaration:
 
+\lstset{caption={Custom metric selenium_test_results registering}}
 \begin{lstlisting}[language={Go}]
 	var (
 		test_results = prometheus.NewGaugeVec(
@@ -375,6 +383,7 @@ Metric declaration:
 
 For ease of reading in this documentation, logging and error handling are removed from the reconcile method demonstration below:
 
+\lstset{caption={Stripped SeleniumTestResult reconciler}}
 \begin{lstlisting}[language={Go}]
 	func (r *SeleniumTestResultReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 		instance := &seleniumv1.SeleniumTestResult{}
@@ -394,69 +403,189 @@ The metric viewed from a prometheus:
 	\centering
 	\includegraphics[width=1\textwidth]{prometheus_ui}
 	\label{fig:prometheus_ui}
+	\caption{Metrics within Prometheus UI}
 \end{figure}
-
-
-
-\lstset{caption={Hello World in C++}, label=src:cpp}
-\begin{lstlisting}[language={C++}]
-#include <stdio>
-
-int main() 
-{
-	int c;
-	std::cout << "Hello World!" << std::endl;
-
-	std::cout << "Press any key to exit." << std::endl;
-	std::cin >> c;
-	
-	return 0;
-}
-\end{lstlisting}
-
-\lstset{caption={Hello World in C\#}, label=src:csharp}
-\begin{lstlisting}[language={[Sharp]C}]
-using System;
-namespace HelloWorld
-{
-	class Hello 
-	{
-		static void Main() 
-		{
-			Console.WriteLine("Hello World!");
-			
-			Console.WriteLine("Press any key to exit.");
-			Console.ReadKey();
-		}
-	}
-}
-\end{lstlisting}
 
 \section{Testiing}
 
-A general Interval Branch and Bound algorithm is shown in Algorithm~\ref{alg:ibb}. An appropriate selection rule is applied in Step~\ref{step:selrule}.\\
-Source of example: \href{https://www.inf.u-szeged.hu/actacybernetica/}{Acta Cybernetica (this is a hyperlink)}.
+Two well-liked Golang libraries for creating and running tests are Ginkgo and Gomega. While Gomega is a matcher library that offers a variety of matches to use in tests, Ginkgo is a behavior-driven development (BDD) testing framework that enables writing tests in a more human-readable format. Together, these two libraries may greatly simplify and improve the usability of developing and running tests in Go.
 
-\begin{algorithm}[H]
-\caption{A general interval B\&B algorithm} 
-\label{alg:ibb} 
-\textbf{\underline{Funct}} IBB($S,f$)
-\begin{algorithmic}[1] % display line numbers before every n line, here n = 1
-\State Set the working list ${\cal L}_W$ := $\{S\}$ and the final list ${\cal L}_Q$ := $\{\}$     
-\While{( ${\cal L}_W \neq \emptyset$ )} \label{alg:igoend}
-	\State  Select an interval $X$ from ${\cal L}_W$ \label{step:selrule}\Comment{Selection rule}  
-	\State Compute $lbf(X)$ \Comment{Bounding rule}		  
-	\If{$X$ cannot be eliminated} \Comment{Elimination rule}
-		\State Divide $X$ into $X^j,\ j=1,\dots, p$, subintervals   \Comment{Division rule}
-		\For{$j=1,\ldots,p$}
-			\If{$X^j$ satisfies the termination criterion} \Comment{Termination rule}
-				\State Store $X^j$ in ${\cal L}_W$ 
-			\Else
-				\State Store $X^j$ in ${\cal L}_W$ 
-			\EndIf
-		\EndFor  
-	\EndIf
-\EndWhile
-\State \textbf{return} ${\cal L}_Q$
-\end{algorithmic}
-\end{algorithm}
+The envtest library is handy when testing Kubernetes applications in Go. In order to test how the application interacts with Kubernetes, Envtest enables spinning up a new Kubernetes control plane inside the test environment. Because it enables testing how code interacts with the Kubernetes API without requiring code to be deployed to a real cluster, this is especially helpful when testing custom controllers or operators.
+
+A test suite is developed that initializes a new Kubernetes control plane using envtest at the start of the test run to leverage Ginkgo, Gomega, and envtest together. Following that, Ginkgo and Gomega are used to write test cases, which involve using application code to create and modify Kubernetes resources and then asserting that the results of those operations match expectations. Finally, the Kubernetes control plane is destroyed using envtest's cleanup functions after the test run. Before deploying the code to a live cluster, this method enables testing the Kubernetes application in a controlled environment to make sure the code functions as planned.
+
+Making e2e tests was made possible by these tools. The tests without the utility functions are as follows:
+
+\lstset{caption={Testing of operator}}
+\begin{lstlisting}[language={Go}]
+	package controllers
+
+	import (
+		"fmt"
+		"os/exec"
+		"path/filepath"
+		"strings"
+		"testing"
+		"time"
+	
+		. "github.com/onsi/ginkgo/v2"
+		. "github.com/onsi/gomega"
+	
+		"k8s.io/client-go/kubernetes/scheme"
+		"k8s.io/client-go/rest"
+		"sigs.k8s.io/controller-runtime/pkg/client"
+		"sigs.k8s.io/controller-runtime/pkg/envtest"
+		logf "sigs.k8s.io/controller-runtime/pkg/log"
+		"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	
+		seleniumv1 "quay.io/molnar_liviusz/selenium-test-operator/api/v1"
+		//+kubebuilder:scaffold:imports
+	)
+	
+	// These tests use Ginkgo (BDD-style Go testing framework). Refer to
+	// http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
+	
+	var cfg *rest.Config
+	var k8sClient client.Client
+	var testEnv *envtest.Environment
+	
+	func TestAPIs(t *testing.T) {
+		RegisterFailHandler(Fail)
+	
+		RunSpecs(t, "Controller Suite")
+	}
+	
+	var _ = BeforeSuite(func() {
+		logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
+	
+		By("bootstrapping test environment")
+		testEnv = &envtest.Environment{
+			CRDDirectoryPaths:     []string{filepath.Join("..", "config", "crd", "bases")},
+			ErrorIfCRDPathMissing: true,
+		}
+	
+		var err error
+		// cfg is defined in this file globally.
+		cfg, err = testEnv.Start()
+		Expect(err).NotTo(HaveOccurred())
+		Expect(cfg).NotTo(BeNil())
+	
+		err = seleniumv1.AddToScheme(scheme.Scheme)
+		Expect(err).NotTo(HaveOccurred())
+	
+		//+kubebuilder:scaffold:scheme
+	
+		k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(k8sClient).NotTo(BeNil())
+	
+	})
+	
+	var _ = AfterSuite(func() {
+		By("tearing down the test environment")
+		err := testEnv.Stop()
+		Expect(err).NotTo(HaveOccurred())
+	})
+	
+	const namespace = "operator-system"
+	
+	var _ = Describe("e2e testing of automating a test", Ordered, func() {
+		BeforeAll(func() {
+			// Moon is installed in this test
+			By("Creating moon namespace")
+			cmd := exec.Command("kubectl", "create", "ns", "moon")
+			_, _ = Run(cmd)
+	
+			By("Installing Moon")
+			Expect(InstallMoon()).To(Succeed())
+		})
+	
+		Context("SeleniumTest Operator", func() {
+			It("should run successfully", func() {
+				var controllerPodName string
+				var err error
+				projectDir, _ := GetProjectDir()
+	
+				// operatorImage stores the name of the image used in the example
+				var operatorImage = "quay.io/molnar_liviusz/selenium-test-operator:v0.0.24"
+	
+				By("deploying the SeleniumTest operator' controller-manager")
+				var cmd = exec.Command("make", "deploy", fmt.Sprintf("IMG=%s", operatorImage))
+				_, err = Run(cmd)
+				ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	
+				By("validating that the controller-manager pod is running as expected")
+				verifyControllerUp := func() error {
+					// Get pod name
+					cmd = exec.Command("kubectl", "get",
+						"pods", "-l", "control-plane=controller-manager",
+						"-o", "go-template={{ range .items }}{{ if not .metadata.deletionTimestamp }}{{ .metadata.name }}"+
+							"{{ \"\\n\" }}{{ end }}{{ end }}",
+						"-n", namespace,
+					)
+					podOutput, err := Run(cmd)
+					ExpectWithOffset(2, err).NotTo(HaveOccurred())
+					podNames := GetNonEmptyLines(string(podOutput))
+					if len(podNames) != 1 {
+						return fmt.Errorf("expect 1 controller pods running, but got %d", len(podNames))
+					}
+					controllerPodName = podNames[0]
+					ExpectWithOffset(2, controllerPodName).Should(ContainSubstring("controller-manager"))
+	
+					// Validate pod status
+					cmd = exec.Command("kubectl", "get",
+						"pods", controllerPodName, "-o", "jsonpath={.status.phase}",
+						"-n", namespace,
+					)
+					status, err := Run(cmd)
+					ExpectWithOffset(2, err).NotTo(HaveOccurred())
+					if string(status) != "Running" {
+						return fmt.Errorf("controller pod in %s status", status)
+					}
+					return nil
+				}
+				EventuallyWithOffset(1, verifyControllerUp, time.Minute, time.Second).Should(Succeed())
+	
+				By("creating an configmap with a selenium .side test")
+				EventuallyWithOffset(1, func() error {
+					cmd = exec.Command("kubectl", "apply", "-f", filepath.Join(projectDir,
+						"config/samples/sample-configmap.yaml"), "-n", namespace)
+					_, err = Run(cmd)
+					return err
+				}, time.Minute, time.Second).Should(Succeed())
+	
+				By("creating an instance of the SeleniumTest(CR)")
+				EventuallyWithOffset(1, func() error {
+					cmd = exec.Command("kubectl", "apply", "-f", filepath.Join(projectDir,
+						"config/samples/selenium_v1_seleniumtest.yaml"), "-n", namespace)
+					_, err = Run(cmd)
+					return err
+				}, time.Minute, time.Second).Should(Succeed())
+	
+				By("validating that the SeleniumTestResult custom resource is created or updated")
+				EventuallyWithOffset(1, func() error {
+					cmd = exec.Command("kubectl", "get", "seleniumtestresult",
+						"seleniumtest-sample", "-o", "jsonpath={.metadata.creationTimestamp}",
+						"-n", namespace,
+					)
+					time, err := Run(cmd)
+					fmt.Println(string(time))
+					ExpectWithOffset(2, err).NotTo(HaveOccurred())
+					if !strings.Contains(string(time), ":") {
+						return fmt.Errorf("SeleniumTestResult was not created")
+					}
+					return nil
+				}, 5*time.Minute, time.Second).Should(Succeed())
+			})
+		})
+	
+		AfterAll(func() {
+			By("Uninstalling Moon")
+			UninstallMoon()
+	
+			By("Removing moon namespace")
+			cmd := exec.Command("kubectl", "delete", "ns", "moon")
+			_, _ = Run(cmd)
+		})
+	})	
+\end{lstlisting}
