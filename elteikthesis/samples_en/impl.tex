@@ -213,8 +213,23 @@ In addition, viable other integration methods will be highlighted, demonstrating
 	\caption{Whole Architecture}
 \end{figure}
 
-\subsection{User-facing components of the SeleniumTestOperator}
-As shown in the user manual, the user needs a test created by the Selenium IDE exported to a .side file, and placed into a config map, to set up a test in the cluster. Additionally, the user must supply a SeleniumTest custom resource containing the necessary data about it. With the operator's deployment, a unique resource definition was also deployed for Kubernetes to comprehend these CRs.
+\subsection{Comparing different Kubernetes operators}
+
+It is necessary to analyze the available possibilities and select the most appropriate one because Go-based operators are not the only way to develop a tool of this nature.
+
+Helm-based operators oversee the deployment and lifetime of Kubernetes applications using Helm charts, as the name implies. They offer a high level of abstraction for managing complex applications and are comparatively simple to use. They may, however, be less adaptable than other kinds of operators.
+
+Ansible-based operators use Ansible playbooks to control Kubernetes application deployment and lifecycle management. They offer great flexibility and are simple to include in current Ansible procedures. They can, however, be more challenging to set up and maintain.
+
+The Kubernetes API is used by Go-based operators, such as the SeleniumTest operator in this guide, to control the deployment and lifecycle of apps. They offer outstanding flexibility and are simple to adapt to certain use situations. However, they can be more challenging to create and need a better comprehension of Kubernetes internals.
+
+The decision to use a go-based operator was motivated by its flexibility, allowing for a more compact system.
+
+\subsection{User-facing API of the SeleniumTestOperator}
+
+Every program has a user interface that enables direct communication between the user and the program. An API was explicitly developed for this purpose, allowing users to provide all the data required for test automation. This evolved into the SeleniumTest API and included the SeleniumTest Custom Resource Definition, a corresponding Go object defining it, a reconcile function specifically designed for this custom resource type, and RBAC privileges in cluster roles with bindings.
+
+The custom resource definition of the SeleniumTest is deployed for Kubernetes alongside the operator to enable the user to create SeleniumTest custom resources containing the necessary data to deploy automated tests. As shown in the user manual, the user also needs a test created by the Selenium IDE exported to a .side file, and placed into a config map, to set up a test in the cluster.
 
 By defining custom resources not included in the basic Kubernetes API, Kubernetes Custom Resource Definitions (CRDs) are used to expand the Kubernetes API. Developers can manage essential resources like pods, services, and deployments in the same way that they manage custom resources, thanks to CRDs.
 
@@ -271,7 +286,9 @@ The reconcile function, in general, is a crucial part of a Kubernetes operator a
 
 \subsection{Automated scheduling of the tests}
 
-The operator assigns all workloads to the same namespace where the user provided the CR and the configmap containing the test file to enable comprehensive monitoring between projects. This workload comprises numerous Selenium side runs wrapped in JavaScript code inside a Node.js container. Kubernetes' built-in automation is used for easier maintenance, and the workload is abstracted within pods within jobs within cronjobs.
+The scheduling of the tests is automated by reconciling—the how and why are here two crucial questions. The operator could start each test in a distinct namespace or in the same namespace as the SeleniumTest CR. Building and maintaining a solution with fewer RBAC-related objects and a more straightforward reconcile function would have been simpler if all workloads had been handled in the operator-system namespace. On the other hand, the latter and preferred option offers the opportunity to incorporate the testing workload into tracking distinct namespaces and projects. A desirable non-functional requirement in contemporary business environments is this.
+
+The workload comprises numerous Selenium side runs wrapped in JavaScript code inside a Node.js container. Kubernetes' built-in automation is used for easier maintenance, and the workload is abstracted within pods within jobs within cronjobs.
 
 In order to make sure that a job is consistently created at the appropriate time, the operator creates a cronjob with the specified schedule. The hash code is put after the name of the jobs, which run under the same name as the cronjob.
 
@@ -309,8 +326,10 @@ The SeleniumTest controller's reconcile method, which has the following syntax (
 		err = r.ensureCronJob(instance)
 
 		return ctrl.Result{}, nil
-	}	
+	}
 \end{lstlisting}
+
+Each new object (ServiceAccount, RoleBinding, and Cronjob) is also erased along with the relevant SeleniumTest CR to simplify maintenance further. In this manner, the entire lifecycle is managed with only the management of the SeleniumTest CR.
 
 \subsection{Using Selenium WebDriver for Browser Interactions}
 
@@ -328,6 +347,10 @@ Data regarding the test, including page load times, failures, and other performa
 	\label{fig:selenium}
 	\caption{SeleniumGrid interaction}
 \end{figure}
+
+\subsection{Test wrapping container from inside}
+
+
 
 \subsection{SeleniumTestResult CR and exposing results as Prometheus metrics}
 

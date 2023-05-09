@@ -96,21 +96,21 @@ func (r *SeleniumTestReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return ctrl.Result{}, err
 	}
 
-	// Ensure the ServiceAccount is present
+	// Ensure the ServiceAccount is present, if not, creates it
 	err = r.ensureServiceAccount(instance)
 	if err != nil {
 		log.Error(err, "Failed to ensure ServiceAccount for CronJob is present")
 		return ctrl.Result{}, err
 	}
 
-	// Ensure the RoleBinding is present
+	// Ensure the RoleBinding is present, if not, creates it
 	err = r.ensureRoleBinding(instance)
 	if err != nil {
 		log.Error(err, "Failed to ensure RoleBinding for ServiceAccount is present")
 		return ctrl.Result{}, err
 	}
 
-	// Ensure the CronJob is present
+	// Ensure the CronJob is present, if not, creates it
 	err = r.ensureCronJob(instance)
 	if err != nil {
 		log.Error(err, "Failed to ensure CronJob is present")
@@ -205,6 +205,10 @@ func (r *SeleniumTestReconciler) newServiceAccountForSeleniumTest(instance *sele
 			Labels:    labels,
 		},
 	}
+
+	// Set the owner reference so that the RoleBinding gets deleted when the SeleniumTest is deleted
+	controllerutil.SetControllerReference(instance, serviceAccount, r.Scheme)
+
 	return serviceAccount
 }
 
@@ -224,6 +228,10 @@ func (r *SeleniumTestReconciler) newRoleBindingForSeleniumTest(instance *seleniu
 		},
 		RoleRef: rbacv1.RoleRef{APIGroup: "rbac.authorization.k8s.io", Kind: "ClusterRole", Name: "operator-seleniumtestresult-editor-role"},
 	}
+
+	// Set the owner reference so that the RoleBinding gets deleted when the SeleniumTest is deleted
+	controllerutil.SetControllerReference(instance, roleBinding, r.Scheme)
+
 	return roleBinding
 }
 

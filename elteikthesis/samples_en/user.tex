@@ -141,9 +141,9 @@ From now on, shell environment will be used universally between operating system
 
 \subsection{Solving kubectl connection problem on Windows}
 
-A configuration file for the kubectl command-line tool for Kubernetes can be found at "~/.kube/config". In addition to the credentials required for cluster authentication, it indicates the Kubernetes cluster with which kubectl should communicate.
+A configuration file for the kubectl command-line tool for Kubernetes can be found at \begin{lstlisting}[language=bash] ~/.kube/config \end{lstlisting} In addition to the credentials required for cluster authentication, it indicates the Kubernetes cluster with which kubectl should communicate.
 
-Depending on the setup, when installing Minikube, it creates a Kubernetes cluster in a virtual machine or a container. Minikube changes the computer's "~/.kube/config" file to set up kubectl to use this new cluster automatically. As a result, kubectl can communicate with the Minikube cluster.
+Depending on the setup, when installing Minikube, it creates a Kubernetes cluster in a virtual machine or a container. Minikube changes the computer's \begin{lstlisting}[language=bash]~/.kube/config \end{lstlisting} file to set up kubectl to use this new cluster automatically. As a result, kubectl can communicate with the Minikube cluster.
 
 Windows users encounter a problem since Minikube sets the configuration file at the Windows operating system level, whereas kubectl refers to the configuration file contained in the WSL distribution.
 
