@@ -335,7 +335,7 @@ Each new object (ServiceAccount, RoleBinding, and Cronjob) is also erased along 
 
 Interactions with web browsers are possible using the Selenium WebDriver tool. It offers a collection of procedures and instructions that mimic user operations, including clicking buttons, inputting text, and moving between pages.
 
-A Node.js container is established with the required Selenium libraries and drivers to use Selenium WebDriver with Node.js with a Selenium Hub deployment (Moon is given as an example in this tutorial, but there are many more possibilities). The container also includes all additional dependencies needed for the tests.
+A Node.js based container is established with the required Selenium libraries and drivers to use Selenium WebDriver with Node.js with a Selenium Hub deployment (Moon is given as an example in this tutorial, but there are many more possibilities). The container also includes all additional dependencies needed for the tests.
 
 The Selenium WebDriver is used within the container to communicate with the Moon. This entails creating a fresh instance of the appropriate browser, which would then be used to navigate to the desired URL and carry out any necessary interactions described with the .side test files.
 
@@ -350,7 +350,66 @@ Data regarding the test, including page load times, failures, and other performa
 
 \subsection{Test wrapping container from inside}
 
+The operator is constructed around the test runner pod, which serves as the primary function of the objective and is supplemented with features necessary for enterprise integrability and user experience.
 
+The pod is intended to be straightforward, compact, and efficient. In order to initialize and manage a Selenium Webdriver and its communication with the Selenium Grid (moon), it uses Selenium's Selenium-side-runner SDK. The base image of the pod's single container is a Node.js image because the selenium-side-runner can only be used with Node.js. In order to avoid installing any unnecessary compilers on an image that will be run in several instances in a production setting, the wrapper logic was written in JavaScript. The only other package installed is Kubernetes/client-node, which makes it possible to communicate with the Kubernetes API, which is needed when producing SeleniumTestResult Custom Resources.
+
+The following is the dockerfile defining the container's image:
+\lstset{caption={Dockerfile}}
+\begin{lstlisting}[language={Dockerfile}]
+	FROM node:18
+
+	RUN mkdir /app
+	WORKDIR /app
+	RUN apt-get update
+
+	RUN npm install @kubernetes/client-node
+	RUN npm install -g selenium-side-runner
+	COPY .side.yml .side.yml
+
+	COPY runner.js runner.js
+
+	ENTRYPOINT ["/bin/sh", "-c" , "node runner.js"]
+\end{lstlisting}
+
+The JavaScript code known as runner.js is in charge of running the tests, handling the outcomes, and writing them into a SeleniumTestResult custom resource. The following is how the code would seem without logging, error handling, imports and other utility non-functional requirements.
+
+\lstset{caption={Simplified runner.js}}
+\begin{lstlisting}[language={Javascript}]
+	...
+	execSync('selenium-side-runner -s $SELENIUM_GRID -o results -r $RETRIES /mnt/config/*.side');
+	...
+	const fileData = fs.readFileSync(path.join('./results', file));
+	success = fileData.success;
+    endTime = fileData.endTime
+	...
+	if SeleniumTestResult.isExists():
+		updateResult(success, endTime)
+	else:
+		createNewResult(success, endTime);
+\end{lstlisting}
+
+\subsection{Evolution of Pod architecture to improve scalability}
+
+There are numerous ways to conduct Selenium tests, including using a Selenium grid solution (like moon). This section will go over the various patterns the project used as it progressed from one design to the next and eventually took on the form now shown in the documentation.
+
+First, putting the web driver wrapper and browser runner code in the same container is the most logical approach. This is the simplest method; having both the web driver and the browser on the same local network completely removes any potential networking problems. The drawback is that it can only be as effective as I could make it because the resource-intensive browser process and the lightweight custom runner code are fused. Additionally, the time/resource-saving features Selenium offers cannot be entirely utilized by a standard browser deployment.
+
+The second variation involves dividing the logical elements into two containers within the same pod. This approach enables the operation of browsers with more robustly constructed pre-made images, such as "selenium/standalone-chrome," and is cleaner and simpler to maintain. Since both containers, in this instance, are part of the same pod, they communicate over the same local network. Because it offers advantages without sacrificing anything, this architecture might be regarded as universally superior to the preceding one.
+
+Finally, the entire running logic of the browser can be isolated, becoming a dependency on an external service for the operator. Although networking challenges may exist between the browser and the Selenium web driver, this offers excellent flexibility and may be the most resource-effective alternative. Where the browser workload is processed is up to the user or company. It may be handled within the same cluster (as shown in this documentation), elsewhere, or contracted out to a selenium grid service made available to the general public. The most resource-intensive portion of the testing makes this decision extremely important. This way, some options are publicly competing industry-grade solutions, where the amount of labor involved in optimization is far more tremendous than what the user's team or I can devote. Moon and Selenoid are such examples.
+
+\subsection{Centralised vs. Decentralised workload management}
+
+Workload management also has an architectural decision with varying benefits. Cronjobs, jobs, pods, and SeleniumTestResults might have either been issued in the same namespace as the SeleniumTest CR that initiated them in a decentralized manner or delivered in a centralized manner into the operator-system namespace. 
+
+The centralized solution offers the benefit of monitoring the enterprise-level resource costs of selenium live testing. Additionally, it is simpler to implement and requires fewer RBAC-related objects.
+
+The namespaced method, in comparison, has the advantage of making selenium testing and resource monitoring isolation easier. Removing the need for access to a different namespace makes it simpler for the teams to manage the selenium tests for their respective applications.
+
+It is much more critical for businesses to understand a project's cost separately from other projects than to view a part function summed across multiple projects. For this reason, the operator functions in a  namespaced architecture.
+
+Although these workloads pale compared to browser automation, the same mental models can be applied. Most industry-standard solutions, like Moon, offer deployment configuration with centralised and namespaced architecture. Moon is deployed centralised in the user manual for ease of demonstration.
 
 \subsection{SeleniumTestResult CR and exposing results as Prometheus metrics}
 
@@ -431,6 +490,93 @@ The metric viewed from a prometheus:
 
 \section{Testing}
 
+A critical component of software development is testing. It confirms that the code operates as planned and complies with all requirements. It is impossible to exaggerate the value of testing because it aids in the early discovery of faults and flaws, lowering total development costs and raising the finished product's caliber.
+
+Here are some details on why code testing is crucial:
+
+\begin{itemize}
+	\item Early Bug Discovery
+	\item Improving Code Quality
+	\item Enhancing User Satisfaction
+	\item Reducing Development Costs
+	\item Boosting Productivity
+\end{itemize}
+
+\subsection{Unit testing}
+
+The software testing that involves isolating specific software application units or components from the rest of the system is known as unit testing. Each code unit is tested separately during unit testing to ensure it operates as intended and satisfies its functional requirements.
+
+Commonly, unit tests concentrate on discrete, small portions of code, such as particular procedures or functions. They are typically automated and frequently run to find and stop bugs as soon as feasible throughout the development process.
+
+The reconciliation logic for the go operator and the JavaCript code for the selenium runner container was developed using unit testing. Without any mocking and utility, the go unit test resembles the following:
+
+\lstset{caption={Go unit testing}}
+\begin{lstlisting}[language={Go}]
+	// Objects to track in the fake client.
+	objs := []runtime.Object{seleniumtest}
+
+	s := runtime.NewScheme()
+	assert.NoError(t, scheme.AddToScheme(s))
+	cl := fake.NewFakeClientWithScheme(s)
+
+	// Test when the instance is not found
+	r := &SeleniumTestReconciler{
+		Client: cl,
+		Scheme: s,
+	}
+	req := ctrl.Request{...}
+	res, err := r.Reconcile(context.Background(), req)
+	assert.NoError(t, err)
+	assert.Equal(t, ctrl.Result{}, res)
+
+	// Test when the instance is found
+	assert.NoError(t, cl.Create(context.Background(), testInstance))
+	res, err = r.Reconcile(context.Background(), req)
+	assert.NoError(t, err)
+	assert.Equal(t, ctrl.Result{}, res)
+
+	// Test when the ConfigMap already exists
+	configMap := &corev1.ConfigMap{...}
+	assert.NoError(t, cl.Create(context.Background(), configMap))
+	res, err = r.ensureConfigMap(testInstance)
+	assert.NoError(t, err)
+	assert.Equal(t, nil, res)
+
+	// Test when the ConfigMap does not exist
+	assert.NoError(t, cl.Delete(context.Background(), configMap))
+	res, err = r.ensureConfigMap(testInstance)
+	assert.NoError(t, err)
+	assert.Equal(t, true, errors.IsNotFound(err))
+\end{lstlisting}
+
+The simplified JavaScript unit test are the following:
+
+\lstset{caption={JavaScript unit testing}}
+\begin{lstlisting}[language={JavaScript}]
+	jest.mock(k8sClient, () => ({
+		getNamespacedCustomObject: jest.fn().mockImplementation(arg => ({
+			"apiVersion": "selenium.mliviusz.com/v1",
+			"kind": "SeleniumTestResult",
+			"metadata": {
+				"name": "testname"
+			},
+			"spec": {
+				"success": true,
+				"endTime": 1678887
+			}
+		})),
+		createNamespacedCustomObject: jest.fn(),
+	}));
+	
+	test("Succesfull CreateNewResult", () => {
+		expect(runner.createNewResult(true, 1435345)).toBe(0);
+	});
+	test("Succesfull UpdateResult", () => {
+		expect(runner.updateResult(true, 1435345)).toBe(0);
+	});
+\end{lstlisting}
+\subsection{E2E Integration testing}
+
 Two well-liked Golang libraries for creating and running tests are Ginkgo and Gomega. While Gomega is a matcher library that offers a variety of matches to use in tests, Ginkgo is a behavior-driven development (BDD) testing framework that enables writing tests in a more human-readable format. Together, these two libraries may greatly simplify and improve the usability of developing and running tests in Go.
 
 The envtest library is handy when testing Kubernetes applications in Go. In order to test how the application interacts with Kubernetes, Envtest enables spinning up a new Kubernetes control plane inside the test environment. Because it enables testing how code interacts with the Kubernetes API without requiring code to be deployed to a real cluster, this is especially helpful when testing custom controllers or operators.
@@ -439,69 +585,23 @@ A test suite is developed that initializes a new Kubernetes control plane using 
 
 Making e2e tests was made possible by these tools. The tests without the utility functions are as follows:
 
-\lstset{caption={Testing of operator}}
+\lstset{caption={E2E testing of operator}}
 \begin{lstlisting}[language={Go}]
-	package controllers
-
-	import (
-		"fmt"
-		"os/exec"
-		"path/filepath"
-		"strings"
-		"testing"
-		"time"
-	
-		. "github.com/onsi/ginkgo/v2"
-		. "github.com/onsi/gomega"
-	
-		"k8s.io/client-go/kubernetes/scheme"
-		"k8s.io/client-go/rest"
-		"sigs.k8s.io/controller-runtime/pkg/client"
-		"sigs.k8s.io/controller-runtime/pkg/envtest"
-		logf "sigs.k8s.io/controller-runtime/pkg/log"
-		"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	
-		seleniumv1 "quay.io/molnar_liviusz/selenium-test-operator/api/v1"
-		//+kubebuilder:scaffold:imports
-	)
-	
-	// These tests use Ginkgo (BDD-style Go testing framework). Refer to
-	// http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
-	
-	var cfg *rest.Config
-	var k8sClient client.Client
-	var testEnv *envtest.Environment
-	
 	func TestAPIs(t *testing.T) {
 		RegisterFailHandler(Fail)
-	
 		RunSpecs(t, "Controller Suite")
 	}
-	
 	var _ = BeforeSuite(func() {
-		logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
-	
 		By("bootstrapping test environment")
-		testEnv = &envtest.Environment{
-			CRDDirectoryPaths:     []string{filepath.Join("..", "config", "crd", "bases")},
-			ErrorIfCRDPathMissing: true,
-		}
-	
-		var err error
-		// cfg is defined in this file globally.
 		cfg, err = testEnv.Start()
 		Expect(err).NotTo(HaveOccurred())
 		Expect(cfg).NotTo(BeNil())
 	
 		err = seleniumv1.AddToScheme(scheme.Scheme)
 		Expect(err).NotTo(HaveOccurred())
-	
-		//+kubebuilder:scaffold:scheme
-	
 		k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(k8sClient).NotTo(BeNil())
-	
 	})
 	
 	var _ = AfterSuite(func() {
@@ -510,42 +610,19 @@ Making e2e tests was made possible by these tools. The tests without the utility
 		Expect(err).NotTo(HaveOccurred())
 	})
 	
-	const namespace = "operator-system"
-	
 	var _ = Describe("e2e testing of automating a test", Ordered, func() {
 		BeforeAll(func() {
-			// Moon is installed in this test
-			By("Creating moon namespace")
-			cmd := exec.Command("kubectl", "create", "ns", "moon")
-			_, _ = Run(cmd)
-	
 			By("Installing Moon")
 			Expect(InstallMoon()).To(Succeed())
 		})
 	
 		Context("SeleniumTest Operator", func() {
 			It("should run successfully", func() {
-				var controllerPodName string
-				var err error
-				projectDir, _ := GetProjectDir()
-	
-				// operatorImage stores the name of the image used in the example
-				var operatorImage = "quay.io/molnar_liviusz/selenium-test-operator:v0.0.24"
-	
 				By("deploying the SeleniumTest operator' controller-manager")
 				var cmd = exec.Command("make", "deploy", fmt.Sprintf("IMG=%s", operatorImage))
-				_, err = Run(cmd)
 				ExpectWithOffset(1, err).NotTo(HaveOccurred())
 	
 				By("validating that the controller-manager pod is running as expected")
-				verifyControllerUp := func() error {
-					// Get pod name
-					cmd = exec.Command("kubectl", "get",
-						"pods", "-l", "control-plane=controller-manager",
-						"-o", "go-template={{ range .items }}{{ if not .metadata.deletionTimestamp }}{{ .metadata.name }}"+
-							"{{ \"\\n\" }}{{ end }}{{ end }}",
-						"-n", namespace,
-					)
 					podOutput, err := Run(cmd)
 					ExpectWithOffset(2, err).NotTo(HaveOccurred())
 					podNames := GetNonEmptyLines(string(podOutput))
@@ -556,16 +633,8 @@ Making e2e tests was made possible by these tools. The tests without the utility
 					ExpectWithOffset(2, controllerPodName).Should(ContainSubstring("controller-manager"))
 	
 					// Validate pod status
-					cmd = exec.Command("kubectl", "get",
-						"pods", controllerPodName, "-o", "jsonpath={.status.phase}",
-						"-n", namespace,
-					)
 					status, err := Run(cmd)
 					ExpectWithOffset(2, err).NotTo(HaveOccurred())
-					if string(status) != "Running" {
-						return fmt.Errorf("controller pod in %s status", status)
-					}
-					return nil
 				}
 				EventuallyWithOffset(1, verifyControllerUp, time.Minute, time.Second).Should(Succeed())
 	
@@ -573,16 +642,12 @@ Making e2e tests was made possible by these tools. The tests without the utility
 				EventuallyWithOffset(1, func() error {
 					cmd = exec.Command("kubectl", "apply", "-f", filepath.Join(projectDir,
 						"config/samples/sample-configmap.yaml"), "-n", namespace)
-					_, err = Run(cmd)
-					return err
 				}, time.Minute, time.Second).Should(Succeed())
 	
 				By("creating an instance of the SeleniumTest(CR)")
 				EventuallyWithOffset(1, func() error {
 					cmd = exec.Command("kubectl", "apply", "-f", filepath.Join(projectDir,
 						"config/samples/selenium_v1_seleniumtest.yaml"), "-n", namespace)
-					_, err = Run(cmd)
-					return err
 				}, time.Minute, time.Second).Should(Succeed())
 	
 				By("validating that the SeleniumTestResult custom resource is created or updated")
@@ -591,17 +656,10 @@ Making e2e tests was made possible by these tools. The tests without the utility
 						"seleniumtest-sample", "-o", "jsonpath={.metadata.creationTimestamp}",
 						"-n", namespace,
 					)
-					time, err := Run(cmd)
-					fmt.Println(string(time))
 					ExpectWithOffset(2, err).NotTo(HaveOccurred())
-					if !strings.Contains(string(time), ":") {
-						return fmt.Errorf("SeleniumTestResult was not created")
-					}
-					return nil
 				}, 5*time.Minute, time.Second).Should(Succeed())
 			})
 		})
-	
 		AfterAll(func() {
 			By("Uninstalling Moon")
 			UninstallMoon()
@@ -609,6 +667,5 @@ Making e2e tests was made possible by these tools. The tests without the utility
 			By("Removing moon namespace")
 			cmd := exec.Command("kubectl", "delete", "ns", "moon")
 			_, _ = Run(cmd)
-		})
-	})	
+		})	
 \end{lstlisting}

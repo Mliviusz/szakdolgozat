@@ -28,3 +28,8 @@ Dockerfile.cross
 operatorOld/*
 *.side
 seleniumTest/*.side
+
+./dockerimage/package.json
+./dockerimage/package-lock.json
+./dockerimage/node_modules
+dockerimage/node_modules/

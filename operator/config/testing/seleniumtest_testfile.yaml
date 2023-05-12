@@ -1,0 +1,18 @@
+apiVersion: selenium.mliviusz.com/v1
+kind: SeleniumTest
+metadata:
+  labels:
+    app.kubernetes.io/name: seleniumtest
+    app.kubernetes.io/instance: seleniumtest-sample
+    app.kubernetes.io/part-of: operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: operator
+  name: test-seleniumtest
+spec:
+  schedule: "*/2 * * * *"
+  repository: quay.io
+  image: molnar_liviusz/selenium-test-runner
+  tag: v0.0.10
+  configMapName: code
+  retries: "3"
+  seleniumGrid: "http://moon.moon.svc:4444/wd/hub"

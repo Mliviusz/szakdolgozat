@@ -10,5 +10,4 @@ COPY .side.yml .side.yml
 
 COPY runner.js runner.js
 
-# selenium-side-runner -s $SELENIUM_GRID  -o results -r $RETRIES ./*.side &&
 ENTRYPOINT ["/bin/sh", "-c" , "node runner.js"]

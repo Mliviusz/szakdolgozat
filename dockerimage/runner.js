@@ -59,7 +59,9 @@ async function updateResult(success, endTime) {
     })
     .catch((err)=>{
         console.log(err)
+        return 1;
     })
+    return 0;
 }
 
 async function createNewResult(success, endTime) {
@@ -81,7 +83,10 @@ async function createNewResult(success, endTime) {
     })
     .catch((err)=>{
         console.log(err)
+        return 1;
     })
+
+    return 0;
 }
 
 main();

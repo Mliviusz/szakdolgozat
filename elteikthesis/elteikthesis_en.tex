@@ -14,6 +14,15 @@
 \usepackage[inkscapeformat=png]{svg}
 \usepackage{biblatex}
 
+\lstdefinelanguage{Dockerfile}
+{
+  morekeywords={FROM, RUN, CMD, LABEL, MAINTAINER, EXPOSE, ENV, ADD, COPY,
+    ENTRYPOINT, VOLUME, USER, WORKDIR, ARG, ONBUILD, STOPSIGNAL, HEALTHCHECK,
+    SHELL},
+  morecomment=[l]{\#},
+  morestring=[b]"
+}
+
 % Document's metadata
 \title{Automated testing of applications with graphical user interface in cloud-native environments} % title
 \date{2023} % year of defense
@@ -74,10 +83,21 @@
 \chapter*{\acklabel}
 \addcontentsline{toc}{chapter}{\acklabel}
 I would like to recognize Zvara Zoltán for his significant contribution to the creation of the SeleniumTest operator. His knowledge and commitment were crucial in making this endeavor a success. I am incredibly appreciative of his advice and assistance during the development process. Zvara, I appreciate your sharing your knowledge with me and your support.
-
+\cleardoublepage
 % Bibliography (mandatory)
 \phantomsection
 \addcontentsline{toc}{chapter}{\biblabel}
+\chapter{Bibliography}
+\label{Bibliography}
+References
+\begin{itemize}
+    \item “Go | Operator SDK.” Operator SDK, https://sdk.operatorframework.io/docs/building-operators/golang/. Accessed 5 May 2023.
+    \item “Kubernetes.” Kubernetes, https://kubernetes.io/. Accessed 5 May 2023.
+    \item “Minikube Start | Minikube.” Minikube, https://minikube.sigs.k8s.io/docs/start/. Accessed 5 May 2023.
+    \item prometheus-operator. “GitHub - Prometheus-Operator/Kube-Prometheus: Use Prometheus to Monitor Kubernetes and Applications Running on Kubernetes.” GitHub, https://github.com/prometheus-operator/kube-prometheus. Accessed 5 May 2023.
+    \item “Selenium.” Selenium, https://www.selenium.dev/. Accessed 5 May 2023.
+    \item Software, Aerokube. “Moon - A Cross Browser Selenium, Cypress, Playwright and Puppeteer Solution for Kubernetes or Openshift Cluster.” Aerokube | Efficient Browser Automation Infrastructure, https://aerokube.com/moon/latest/. Accessed 5 May 2023.
+\end{itemize}
 \printbibliography[title=\biblabel]
 \cleardoublepage
 

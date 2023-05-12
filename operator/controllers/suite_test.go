@@ -74,7 +74,6 @@ var _ = BeforeSuite(func() {
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
-
 })
 
 var _ = AfterSuite(func() {
@@ -172,6 +171,29 @@ var _ = Describe("e2e testing of automating a test", Ordered, func() {
 				}
 				return nil
 			}, 5*time.Minute, time.Second).Should(Succeed())
+		})
+	})
+
+	Context("When creating SeleniumTest", func() {
+		It("Should should look up configMap and error for not found", func() {
+			projectDir, _ := GetProjectDir()
+			var err error
+
+			By("Creating a new SeleniumTest")
+			EventuallyWithOffset(1, func() error {
+				var cmd = exec.Command("kubectl", "apply", "-f", filepath.Join(projectDir,
+					"config/testing/seleniumtest_testfile.yaml"), "-n", "default")
+				_, err = Run(cmd)
+				return err
+			}, time.Minute, time.Second).Should(Succeed())
+
+			By("By checking the SeleniumTest did not created ServiceAccount")
+			var cmd = exec.Command("kubectl", "get",
+				"serviceaccounts", "test-seleniumtest", "-o", "json",
+				"-n", "default",
+			)
+			_, err = Run(cmd)
+			ExpectWithOffset(2, err).To(HaveOccurred())
 		})
 	})
 
